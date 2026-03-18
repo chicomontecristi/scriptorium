@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import Link from "next/link";
+import ScriptoriumLogo from "@/components/ui/ScriptoriumLogo";
 
 // ─── INITIATION SCREEN ─────────────────────────────────────────────────────
 // The entry point. The reader is not yet a reader — they are a supplicant.
@@ -156,27 +157,45 @@ export default function InitiationScreen() {
           )}
         </AnimatePresence>
 
-        {/* THE SCRIPTORIUM wordmark */}
+        {/* THE SCRIPTORIUM sigil + wordmark */}
         <AnimatePresence>
           {titleVisible && (
-            <motion.h1
-              className="relative mb-3 select-none"
-              style={{
-                fontFamily: '"EB Garamond", Garamond, Georgia, serif',
-                fontSize: "clamp(2.5rem, 8vw, 5.5rem)",
-                fontWeight: 400,
-                letterSpacing: "0.12em",
-                lineHeight: 1,
-                color: "#F5E6C8",
-                textShadow:
-                  "0 0 60px rgba(201,168,76,0.2), 0 2px 4px rgba(0,0,0,0.8)",
-              }}
+            <motion.div
+              className="relative mb-3 select-none flex flex-col items-center"
               initial={{ opacity: 0, y: 20, filter: "blur(4px)" }}
               animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
               transition={{ duration: 1.0, ease: [0.2, 0, 0.1, 1] }}
             >
-              THE SCRIPTORIUM
-            </motion.h1>
+              {/* Brass sigil — pulsing glow */}
+              <motion.div
+                className="mb-5"
+                animate={{
+                  filter: [
+                    "drop-shadow(0 0 8px rgba(201,168,76,0.3))",
+                    "drop-shadow(0 0 20px rgba(201,168,76,0.55))",
+                    "drop-shadow(0 0 8px rgba(201,168,76,0.3))",
+                  ],
+                }}
+                transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
+              >
+                <ScriptoriumLogo size={72} />
+              </motion.div>
+
+              <h1
+                style={{
+                  fontFamily: '"EB Garamond", Garamond, Georgia, serif',
+                  fontSize: "clamp(2.5rem, 8vw, 5.5rem)",
+                  fontWeight: 400,
+                  letterSpacing: "0.12em",
+                  lineHeight: 1,
+                  color: "#F5E6C8",
+                  textShadow:
+                    "0 0 60px rgba(201,168,76,0.2), 0 2px 4px rgba(0,0,0,0.8)",
+                }}
+              >
+                THE SCRIPTORIUM
+              </h1>
+            </motion.div>
           )}
         </AnimatePresence>
 
@@ -309,6 +328,35 @@ export default function InitiationScreen() {
               >
                 First read. Unrepeatable.
               </motion.p>
+
+              {/* ── Chapter index strip ── */}
+              <motion.div
+                className="mt-10"
+                style={{
+                  display: "flex",
+                  gap: "1rem",
+                  justifyContent: "center",
+                  flexWrap: "wrap",
+                }}
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ delay: 0.8, duration: 0.6 }}
+              >
+                <ChapterIndexCard
+                  number="I"
+                  title="The Sound Before the Sound"
+                  subtitle="San Juan, 1966–1978"
+                  href="/chapter/one"
+                  isLocked={false}
+                />
+                <ChapterIndexCard
+                  number="II"
+                  title="The Machine and the Ghost"
+                  subtitle="New York / Los Angeles, 1984–1992"
+                  href="/chapter/two"
+                  isLocked={true}
+                />
+              </motion.div>
             </motion.div>
           )}
         </AnimatePresence>
@@ -398,5 +446,129 @@ function StatusDot({ label, active, pulse }: { label: string; active?: boolean; 
         {label}
       </span>
     </div>
+  );
+}
+
+// ─── CHAPTER INDEX CARD ───────────────────────────────────────────────────────
+// Small chapter preview cards on the initiation screen.
+// Locked chapters show a seal indicator.
+
+function ChapterIndexCard({
+  number,
+  title,
+  subtitle,
+  href,
+  isLocked,
+}: {
+  number: string;
+  title: string;
+  subtitle: string;
+  href: string;
+  isLocked: boolean;
+}) {
+  return (
+    <Link href={href} style={{ textDecoration: "none" }}>
+      <motion.div
+        style={{
+          width: "200px",
+          padding: "0.9rem 1rem",
+          border: isLocked
+            ? "1px solid rgba(201,168,76,0.12)"
+            : "1px solid rgba(201,168,76,0.28)",
+          borderRadius: "1px",
+          background: isLocked
+            ? "rgba(13,11,8,0.4)"
+            : "rgba(201,168,76,0.04)",
+          cursor: "pointer",
+          textAlign: "left",
+          position: "relative",
+          overflow: "hidden",
+        }}
+        whileHover={
+          isLocked
+            ? { borderColor: "rgba(201,168,76,0.22)" }
+            : {
+                borderColor: "rgba(201,168,76,0.5)",
+                background: "rgba(201,168,76,0.07)",
+              }
+        }
+        transition={{ duration: 0.2 }}
+      >
+        {/* Chapter number */}
+        <p
+          style={{
+            fontFamily: '"JetBrains Mono", monospace',
+            fontSize: "0.5rem",
+            letterSpacing: "0.25em",
+            color: isLocked ? "rgba(201,168,76,0.3)" : "rgba(201,168,76,0.6)",
+            textTransform: "uppercase",
+            marginBottom: "0.3rem",
+          }}
+        >
+          {isLocked ? (
+            <span style={{ display: "inline-flex", alignItems: "center", gap: "0.3rem" }}>
+              CHAPTER {number}
+              <span style={{ fontSize: "0.6rem" }}>⚿</span>
+            </span>
+          ) : (
+            `CHAPTER ${number}`
+          )}
+        </p>
+
+        {/* Title */}
+        <p
+          style={{
+            fontFamily: '"EB Garamond", Garamond, Georgia, serif',
+            fontSize: "0.9rem",
+            fontStyle: "italic",
+            color: isLocked ? "rgba(245,230,200,0.25)" : "rgba(245,230,200,0.75)",
+            lineHeight: 1.3,
+            marginBottom: "0.25rem",
+          }}
+        >
+          {title}
+        </p>
+
+        {/* Subtitle */}
+        <p
+          style={{
+            fontFamily: '"JetBrains Mono", monospace',
+            fontSize: "0.5rem",
+            letterSpacing: "0.1em",
+            color: isLocked ? "rgba(201,168,76,0.2)" : "rgba(201,168,76,0.4)",
+            textTransform: "uppercase",
+          }}
+        >
+          {subtitle}
+        </p>
+
+        {/* Locked overlay stripe */}
+        {isLocked && (
+          <div
+            style={{
+              position: "absolute",
+              top: 0,
+              right: 0,
+              padding: "0.15rem 0.35rem",
+              background: "rgba(201,168,76,0.06)",
+              borderLeft: "1px solid rgba(201,168,76,0.1)",
+              borderBottom: "1px solid rgba(201,168,76,0.1)",
+            }}
+          >
+            <span
+              style={{
+                fontFamily: '"JetBrains Mono", monospace',
+                fontSize: "0.45rem",
+                letterSpacing: "0.15em",
+                color: "rgba(201,168,76,0.3)",
+                textTransform: "uppercase",
+              }}
+            >
+              SEALED
+            </span>
+          </div>
+        )}
+      </motion.div>
+    </Link>
   );
 }

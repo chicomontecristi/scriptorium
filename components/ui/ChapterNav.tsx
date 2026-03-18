@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
 import type { Chapter } from "@/lib/types";
+import ScriptoriumLogo from "./ScriptoriumLogo";
 
 // ─── CHAPTER NAVIGATION ───────────────────────────────────────────────────────
 // Minimal top bar. Hides on scroll down, reveals on scroll up.
@@ -76,19 +77,28 @@ export default function ChapterNav({ chapter }: ChapterNavProps) {
           >
             {/* ── Left: Scriptorium wordmark ──────────────── */}
             <Link href="/" style={{ textDecoration: "none" }}>
-              <motion.span
+              <motion.div
                 style={{
-                  fontFamily: '"EB Garamond", Garamond, Georgia, serif',
-                  fontSize: "0.875rem",
-                  letterSpacing: "0.1em",
-                  color: "rgba(245,230,200,0.55)",
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "8px",
                   cursor: "pointer",
-                  transition: "color 0.2s ease",
                 }}
-                whileHover={{ color: "rgba(245,230,200,0.9)" }}
+                whileHover={{ opacity: 0.9 }}
+                initial={{ opacity: 0.7 }}
               >
-                The Scriptorium
-              </motion.span>
+                <ScriptoriumLogo size={22} />
+                <span
+                  style={{
+                    fontFamily: '"EB Garamond", Garamond, Georgia, serif',
+                    fontSize: "0.875rem",
+                    letterSpacing: "0.1em",
+                    color: "rgba(245,230,200,0.65)",
+                  }}
+                >
+                  The Scriptorium
+                </span>
+              </motion.div>
             </Link>
 
             {/* ── Center: Chapter identity ────────────────── */}

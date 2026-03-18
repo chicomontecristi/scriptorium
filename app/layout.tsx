@@ -23,8 +23,9 @@ export default function RootLayout({
         {/* Preconnect for Google Fonts */}
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
-        {/* Favicon placeholder */}
-        <link rel="icon" href="/favicon.ico" sizes="any" />
+        {/* Favicon — brass sigil */}
+        <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+        <link rel="icon" href="/favicon.svg" sizes="any" />
       </head>
       <body className="vault-noise antialiased">
         {children}

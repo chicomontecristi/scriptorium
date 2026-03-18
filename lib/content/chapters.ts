@@ -96,6 +96,21 @@ export const CHAPTERS: Record<string, Chapter> = {
       },
     ],
   },
+
+  two: {
+    slug: "two",
+    number: 2,
+    romanNumeral: "TWO",
+    title: "The Machine and the Ghost",
+    subtitle: "New York / Los Angeles, 1984–1992",
+    epigraph: {
+      text: "Fame is a room with no windows. You never know which direction you're facing.",
+      attribution: "Robi Draco Rosa",
+    },
+    isLocked: true,
+    wordCount: 0,
+    paragraphs: [], // Sealed. Content arrives with the writing.
+  },
 };
 
 export function getChapter(slug: string): Chapter | null {
