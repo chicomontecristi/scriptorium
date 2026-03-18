@@ -1,5 +1,5 @@
 import { notFound } from "next/navigation";
-import { getChapter, getAllChapterSlugs } from "@/lib/content/chapters";
+import { getChapter, getAllChapterSlugs, CHAPTERS } from "@/lib/content/chapters";
 import ChapterPageClient from "./ChapterPageClient";
 
 // ─── CHAPTER PAGE ────────────────────────────────────────────────────────────
@@ -33,5 +33,11 @@ export default function ChapterPage({ params }: Props) {
     notFound();
   }
 
-  return <ChapterPageClient chapter={chapter} />;
+  // Resolve next chapter (by chapter number)
+  const allChapters = Object.values(CHAPTERS).sort((a, b) => a.number - b.number);
+  const currentIndex = allChapters.findIndex((c) => c.slug === chapter.slug);
+  const nextChapter = currentIndex >= 0 ? (allChapters[currentIndex + 1] ?? null) : null;
+  const prevChapter = currentIndex > 0 ? (allChapters[currentIndex - 1] ?? null) : null;
+
+  return <ChapterPageClient chapter={chapter} nextChapter={nextChapter} prevChapter={prevChapter} />;
 }

@@ -19,6 +19,9 @@ import MarginWorld from "./MarginWorld";
 import SignalInkModal from "./SignalInkModal";
 import ProgressIndicator from "./ProgressIndicator";
 import ChapterNav from "@/components/ui/ChapterNav";
+import SubscriptionModal from "@/components/ui/SubscriptionModal";
+import type { SubscriptionTierName } from "@/components/ui/SubscriptionModal";
+import Link from "next/link";
 
 // ─── READING SURFACE ─────────────────────────────────────────────────────────
 // The complete reading environment. This is the heart of The Scriptorium.
@@ -26,9 +29,11 @@ import ChapterNav from "@/components/ui/ChapterNav";
 
 interface ReadingSurfaceProps {
   chapter: Chapter;
+  nextChapter?: Chapter | null;
+  prevChapter?: Chapter | null;
 }
 
-export default function ReadingSurface({ chapter }: ReadingSurfaceProps) {
+export default function ReadingSurface({ chapter, nextChapter, prevChapter }: ReadingSurfaceProps) {
   const [annotations, setAnnotations] = useState<Annotation[]>([]);
   const [activeInkType, setActiveInkTypeState] = useState<InkType>("ghost");
   const [marginLayer, setMarginLayer] = useState<MarginLayer>("mine");
@@ -37,6 +42,9 @@ export default function ReadingSurface({ chapter }: ReadingSurfaceProps) {
   const [questionAsked, setQuestionAsked] = useState(false);
   const [isComplete, setIsComplete] = useState(false);
   const [showCompletionEvent, setShowCompletionEvent] = useState(false);
+  const [subscriptionModalOpen, setSubscriptionModalOpen] = useState(false);
+  const [gateTier, setGateTier] = useState<SubscriptionTierName | undefined>(undefined);
+  const [gateFeatureName, setGateFeatureName] = useState<string | undefined>(undefined);
   const contentRef = useRef<HTMLDivElement>(null);
 
   // ── Initialize reader state ────────────────────────────────
@@ -109,6 +117,13 @@ export default function ReadingSurface({ chapter }: ReadingSurfaceProps) {
   // ── Handle annotation deleted ─────────────────────────────
   const handleAnnotationDeleted = useCallback((id: string) => {
     setAnnotations((prev) => prev.filter((a) => a.id !== id));
+  }, []);
+
+  // ── Handle subscription gate trigger ──────────────────────
+  const handleGateTriggered = useCallback((tier: SubscriptionTierName, featureName: string) => {
+    setGateTier(tier);
+    setGateFeatureName(featureName);
+    setSubscriptionModalOpen(true);
   }, []);
 
   return (
@@ -240,6 +255,13 @@ export default function ReadingSurface({ chapter }: ReadingSurfaceProps) {
               — END OF CHAPTER {chapter.romanNumeral} —
             </p>
           </div>
+
+          {/* ── Chapter navigation ───────────────────────────── */}
+          <ChapterEndNav
+            prevChapter={prevChapter}
+            nextChapter={nextChapter}
+            onGateTriggered={handleGateTriggered}
+          />
         </div>
 
         {/* ── Margin World — hidden on mobile, right rail on desktop ── */}
@@ -251,6 +273,7 @@ export default function ReadingSurface({ chapter }: ReadingSurfaceProps) {
             onLayerChange={setMarginLayer}
             onAnnotationUpdated={handleAnnotationUpdated}
             onAnnotationDeleted={handleAnnotationDeleted}
+            onGateTriggered={handleGateTriggered}
           />
         </div>
       </div>
@@ -281,6 +304,14 @@ export default function ReadingSurface({ chapter }: ReadingSurfaceProps) {
           />
         )}
       </AnimatePresence>
+
+      {/* ── Subscription Gate Modal ──────────────────────────── */}
+      <SubscriptionModal
+        isOpen={subscriptionModalOpen}
+        triggeredBy={gateTier}
+        featureName={gateFeatureName}
+        onClose={() => setSubscriptionModalOpen(false)}
+      />
     </div>
   );
 }
@@ -552,6 +583,232 @@ function CompletionEvent({
           I have read this chapter
         </motion.button>
       </motion.div>
+    </motion.div>
+  );
+}
+
+
+// ─── CHAPTER END NAV ─────────────────────────────────────────────────────────
+// Navigation strip at the bottom of the reading column.
+// Shows prev chapter (if any) and next chapter (open or sealed).
+
+interface ChapterEndNavProps {
+  prevChapter?: Chapter | null;
+  nextChapter?: Chapter | null;
+  onGateTriggered: (tier: SubscriptionTierName, featureName: string) => void;
+}
+
+function ChapterEndNav({ prevChapter, nextChapter, onGateTriggered }: ChapterEndNavProps) {
+  if (!prevChapter && !nextChapter) return null;
+
+  return (
+    <motion.div
+      style={{
+        marginTop: "4rem",
+        paddingTop: "3rem",
+        paddingBottom: "3rem",
+        borderTop: "1px solid rgba(201,168,76,0.1)",
+        display: "flex",
+        justifyContent: "space-between",
+        alignItems: "stretch",
+        gap: "1rem",
+      }}
+      initial={{ opacity: 0, y: 12 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.6, delay: 0.3, ease: "easeOut" }}
+    >
+      {/* ── Previous chapter ── */}
+      <div style={{ flex: 1 }}>
+        {prevChapter && (
+          <Link href={`/chapter/${prevChapter.slug}`} style={{ textDecoration: "none" }}>
+            <motion.div
+              style={{
+                padding: "1rem",
+                border: "1px solid rgba(201,168,76,0.12)",
+                background: "rgba(201,168,76,0.02)",
+                cursor: "pointer",
+                display: "flex",
+                flexDirection: "column",
+                gap: "0.3rem",
+              }}
+              whileHover={{
+                borderColor: "rgba(201,168,76,0.3)",
+                background: "rgba(201,168,76,0.05)",
+              }}
+              transition={{ duration: 0.2 }}
+            >
+              <span
+                style={{
+                  fontFamily: '"JetBrains Mono", monospace',
+                  fontSize: "0.5rem",
+                  letterSpacing: "0.2em",
+                  color: "rgba(201,168,76,0.4)",
+                  textTransform: "uppercase",
+                }}
+              >
+                ← Previous
+              </span>
+              <span
+                style={{
+                  fontFamily: '"EB Garamond", Garamond, Georgia, serif',
+                  fontSize: "0.95rem",
+                  fontStyle: "italic",
+                  color: "rgba(245,230,200,0.65)",
+                  lineHeight: 1.3,
+                }}
+              >
+                {prevChapter.title}
+              </span>
+              <span
+                style={{
+                  fontFamily: '"JetBrains Mono", monospace',
+                  fontSize: "0.5rem",
+                  letterSpacing: "0.1em",
+                  color: "rgba(201,168,76,0.3)",
+                  textTransform: "uppercase",
+                }}
+              >
+                Chapter {prevChapter.romanNumeral}
+              </span>
+            </motion.div>
+          </Link>
+        )}
+      </div>
+
+      {/* ── Divider ── */}
+      {prevChapter && nextChapter && (
+        <div
+          style={{
+            width: "1px",
+            background:
+              "linear-gradient(180deg, transparent, rgba(201,168,76,0.2) 30%, rgba(201,168,76,0.2) 70%, transparent)",
+            alignSelf: "stretch",
+          }}
+        />
+      )}
+
+      {/* ── Next chapter ── */}
+      <div style={{ flex: 1, display: "flex", justifyContent: "flex-end" }}>
+        {nextChapter && (
+          nextChapter.isLocked ? (
+            // Locked — clicking opens subscription gate
+            <motion.button
+              onClick={() => onGateTriggered("codex", `Chapter ${nextChapter.romanNumeral}`)}
+              style={{
+                width: "100%",
+                padding: "1rem",
+                border: "1px solid rgba(201,168,76,0.08)",
+                background: "rgba(201,168,76,0.01)",
+                cursor: "pointer",
+                textAlign: "right",
+                display: "flex",
+                flexDirection: "column",
+                alignItems: "flex-end",
+                gap: "0.3rem",
+              }}
+              whileHover={{
+                borderColor: "rgba(201,168,76,0.18)",
+                background: "rgba(201,168,76,0.03)",
+              }}
+              transition={{ duration: 0.2 }}
+            >
+              <span
+                style={{
+                  fontFamily: '"JetBrains Mono", monospace',
+                  fontSize: "0.5rem",
+                  letterSpacing: "0.2em",
+                  color: "rgba(201,168,76,0.3)",
+                  textTransform: "uppercase",
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "0.3rem",
+                }}
+              >
+                Next →
+                <span style={{ fontSize: "0.65rem" }}>⚿</span>
+              </span>
+              <span
+                style={{
+                  fontFamily: '"EB Garamond", Garamond, Georgia, serif',
+                  fontSize: "0.95rem",
+                  fontStyle: "italic",
+                  color: "rgba(245,230,200,0.3)",
+                  lineHeight: 1.3,
+                }}
+              >
+                {nextChapter.title}
+              </span>
+              <span
+                style={{
+                  fontFamily: '"JetBrains Mono", monospace',
+                  fontSize: "0.5rem",
+                  letterSpacing: "0.1em",
+                  color: "rgba(201,168,76,0.2)",
+                  textTransform: "uppercase",
+                }}
+              >
+                Chapter {nextChapter.romanNumeral} · Sealed
+              </span>
+            </motion.button>
+          ) : (
+            // Open chapter
+            <Link href={`/chapter/${nextChapter.slug}`} style={{ textDecoration: "none", width: "100%" }}>
+              <motion.div
+                style={{
+                  padding: "1rem",
+                  border: "1px solid rgba(201,168,76,0.15)",
+                  background: "rgba(201,168,76,0.03)",
+                  cursor: "pointer",
+                  textAlign: "right",
+                  display: "flex",
+                  flexDirection: "column",
+                  alignItems: "flex-end",
+                  gap: "0.3rem",
+                }}
+                whileHover={{
+                  borderColor: "rgba(201,168,76,0.4)",
+                  background: "rgba(201,168,76,0.07)",
+                }}
+                transition={{ duration: 0.2 }}
+              >
+                <span
+                  style={{
+                    fontFamily: '"JetBrains Mono", monospace',
+                    fontSize: "0.5rem",
+                    letterSpacing: "0.2em",
+                    color: "rgba(201,168,76,0.5)",
+                    textTransform: "uppercase",
+                  }}
+                >
+                  Next →
+                </span>
+                <span
+                  style={{
+                    fontFamily: '"EB Garamond", Garamond, Georgia, serif',
+                    fontSize: "0.95rem",
+                    fontStyle: "italic",
+                    color: "rgba(245,230,200,0.7)",
+                    lineHeight: 1.3,
+                  }}
+                >
+                  {nextChapter.title}
+                </span>
+                <span
+                  style={{
+                    fontFamily: '"JetBrains Mono", monospace',
+                    fontSize: "0.5rem",
+                    letterSpacing: "0.1em",
+                    color: "rgba(201,168,76,0.35)",
+                    textTransform: "uppercase",
+                  }}
+                >
+                  Chapter {nextChapter.romanNumeral}
+                </span>
+              </motion.div>
+            </Link>
+          )
+        )}
+      </div>
     </motion.div>
   );
 }

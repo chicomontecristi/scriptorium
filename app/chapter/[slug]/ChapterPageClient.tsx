@@ -13,9 +13,11 @@ import ScriptoriumLogo from "@/components/ui/ScriptoriumLogo";
 
 interface Props {
   chapter: Chapter;
+  nextChapter?: Chapter | null;
+  prevChapter?: Chapter | null;
 }
 
-export default function ChapterPageClient({ chapter }: Props) {
+export default function ChapterPageClient({ chapter, nextChapter, prevChapter }: Props) {
   const [transitionDone, setTransitionDone] = useState(false);
 
   useEffect(() => {
@@ -62,7 +64,7 @@ export default function ChapterPageClient({ chapter }: Props) {
         animate={{ opacity: transitionDone ? 1 : 0 }}
         transition={{ duration: 0.6, delay: 0.1 }}
       >
-        <ReadingSurface chapter={chapter} />
+        <ReadingSurface chapter={chapter} nextChapter={nextChapter} prevChapter={prevChapter} />
       </motion.div>
 
       {/* ── Iris wipe reveal ─────────────────────────────────── */}

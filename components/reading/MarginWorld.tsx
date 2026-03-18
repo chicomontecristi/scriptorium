@@ -6,6 +6,7 @@ import type { Annotation, MarginLayer } from "@/lib/types";
 import { INK_CONFIGS } from "@/lib/types";
 import { deleteAnnotation, updateAnnotationNote } from "@/lib/ink";
 import AuthorWhisper, { DEMO_WHISPERS } from "./AuthorWhisper";
+import type { SubscriptionTierName } from "@/components/ui/SubscriptionModal";
 
 // ─── MARGIN WORLD ────────────────────────────────────────────────────────────
 // The living right rail where annotations surface as floating steam.
@@ -19,6 +20,7 @@ interface MarginWorldProps {
   onLayerChange: (layer: MarginLayer) => void;
   onAnnotationUpdated: (annotation: Annotation) => void;
   onAnnotationDeleted: (id: string) => void;
+  onGateTriggered: (tier: SubscriptionTierName, featureName: string) => void;
 }
 
 export default function MarginWorld({
@@ -28,6 +30,7 @@ export default function MarginWorld({
   onLayerChange,
   onAnnotationUpdated,
   onAnnotationDeleted,
+  onGateTriggered,
 }: MarginWorldProps) {
   const [expandedId, setExpandedId] = useState<string | null>(null);
 
@@ -47,7 +50,11 @@ export default function MarginWorld({
       }}
     >
       {/* ── Layer selector ─────────────────────────────────── */}
-      <LayerSelector activeLayer={activeLayer} onLayerChange={onLayerChange} />
+      <LayerSelector
+        activeLayer={activeLayer}
+        onLayerChange={onLayerChange}
+        onGateTriggered={onGateTriggered}
+      />
 
       {/* ── Author Whispers — always visible ──────────────── */}
       <div style={{ marginTop: "1.5rem", display: "flex", flexDirection: "column" }}>
@@ -136,26 +143,40 @@ export default function MarginWorld({
 
 // ─── LAYER SELECTOR ──────────────────────────────────────────────────────────
 
-const LAYERS: { id: MarginLayer; label: string; available: boolean }[] = [
-  { id: "mine",      label: "My Ink",    available: true },
-  { id: "author",    label: "Author",    available: false }, // Phase 2
-  { id: "community", label: "Archive",   available: false }, // Phase 2
-  { id: "all",       label: "All",       available: false }, // Phase 2
+const LAYERS: {
+  id: MarginLayer;
+  label: string;
+  available: boolean;
+  requiredTier: SubscriptionTierName;
+  featureName: string;
+}[] = [
+  { id: "mine",      label: "My Ink",    available: true,  requiredTier: "codex",   featureName: "Personal Annotations" },
+  { id: "author",    label: "Author",    available: false, requiredTier: "author",  featureName: "Author Whisper Layer" },
+  { id: "community", label: "Archive",   available: false, requiredTier: "archive", featureName: "Community Archive Layer" },
+  { id: "all",       label: "All",       available: false, requiredTier: "archive", featureName: "All Layers" },
 ];
 
 function LayerSelector({
   activeLayer,
   onLayerChange,
+  onGateTriggered,
 }: {
   activeLayer: MarginLayer;
   onLayerChange: (layer: MarginLayer) => void;
+  onGateTriggered: (tier: SubscriptionTierName, featureName: string) => void;
 }) {
   return (
     <div style={{ display: "flex", gap: "0.5rem", flexWrap: "wrap" }}>
-      {LAYERS.map(({ id, label, available }) => (
-        <button
+      {LAYERS.map(({ id, label, available, requiredTier, featureName }) => (
+        <motion.button
           key={id}
-          onClick={() => available && onLayerChange(id)}
+          onClick={() => {
+            if (available) {
+              onLayerChange(id);
+            } else {
+              onGateTriggered(requiredTier, featureName);
+            }
+          }}
           style={{
             fontFamily: '"JetBrains Mono", monospace',
             fontSize: "0.55rem",
@@ -169,18 +190,39 @@ function LayerSelector({
             background: "transparent",
             border: activeLayer === id
               ? "1px solid rgba(201,168,76,0.4)"
-              : "1px solid transparent",
+              : available
+                ? "1px solid transparent"
+                : "1px solid rgba(245,230,200,0.04)",
             padding: "0.2rem 0.45rem",
-            cursor: available ? "pointer" : "default",
+            cursor: "pointer",
             borderRadius: "1px",
             transition: "all 0.2s ease",
+            position: "relative",
           }}
+          whileHover={
+            !available
+              ? {
+                  borderColor: "rgba(201,168,76,0.2)",
+                  color: "rgba(245,230,200,0.3)",
+                }
+              : undefined
+          }
+          whileTap={{ scale: 0.96 }}
         >
           {label}
           {!available && (
-            <span style={{ marginLeft: "0.2em", opacity: 0.5, fontSize: "0.5rem" }}>↑</span>
+            <span
+              style={{
+                marginLeft: "0.2em",
+                opacity: 0.4,
+                fontSize: "0.5rem",
+                color: "rgba(201,168,76,0.5)",
+              }}
+            >
+              ⚿
+            </span>
           )}
-        </button>
+        </motion.button>
       ))}
     </div>
   );
