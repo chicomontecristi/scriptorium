@@ -21,6 +21,8 @@ import ProgressIndicator from "./ProgressIndicator";
 import ChapterNav from "@/components/ui/ChapterNav";
 import SubscriptionModal from "@/components/ui/SubscriptionModal";
 import type { SubscriptionTierName } from "@/components/ui/SubscriptionModal";
+import ContinueReadingToast from "@/components/ui/ContinueReadingToast";
+import InkTutorial from "@/components/ui/InkTutorial";
 import Link from "next/link";
 
 // ─── READING SURFACE ─────────────────────────────────────────────────────────
@@ -312,6 +314,15 @@ export default function ReadingSurface({ chapter, nextChapter, prevChapter }: Re
         featureName={gateFeatureName}
         onClose={() => setSubscriptionModalOpen(false)}
       />
+
+      {/* ── Continue Reading toast ───────────────────────────── */}
+      <ContinueReadingToast
+        chapterSlug={chapter.slug}
+        chapterRomanNumeral={chapter.romanNumeral}
+      />
+
+      {/* ── First-visit ink tutorial ─────────────────────────── */}
+      <InkTutorial />
     </div>
   );
 }
