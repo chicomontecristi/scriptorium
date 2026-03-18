@@ -4,6 +4,7 @@ import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { saveQuestion } from "@/lib/ink";
 import { INK_CONFIGS } from "@/lib/types";
+import { playSignalSend } from "@/lib/sound";
 
 // ─── SIGNAL INK MODAL — THE QUESTION CHAMBER ─────────────────────────────────
 // One question per chapter. First read only.
@@ -41,6 +42,7 @@ export default function SignalInkModal({
     try {
       // Save locally
       saveQuestion(chapterSlug, selectedText, question.trim(), email.trim() || undefined);
+      playSignalSend();
 
       // Phase 1: POST to API route which emails the author
       const res = await fetch("/api/signal", {

@@ -42,7 +42,7 @@ export default function InkToolbar({
 
   return (
     <div
-      className="fixed left-0 top-1/2 -translate-y-1/2 z-40 flex flex-col items-center"
+      className="fixed left-0 top-1/2 -translate-y-1/2 z-40 flex flex-col items-center ink-toolbar-fixed"
       style={{
         gap: "0px",
         paddingLeft: "0",
@@ -50,6 +50,7 @@ export default function InkToolbar({
     >
       {/* ── Vertical brass rail ────────────────────────────── */}
       <div
+        className="rail-top"
         style={{
           width: "1px",
           height: "24px",
@@ -165,6 +166,7 @@ export default function InkToolbar({
 
       {/* ── Bottom rail ────────────────────────────────────── */}
       <div
+        className="rail-bottom"
         style={{
           width: "1px",
           height: "24px",

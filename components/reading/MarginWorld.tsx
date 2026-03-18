@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import type { Annotation, MarginLayer } from "@/lib/types";
 import { INK_CONFIGS } from "@/lib/types";
 import { deleteAnnotation, updateAnnotationNote } from "@/lib/ink";
+import AuthorWhisper, { DEMO_WHISPERS } from "./AuthorWhisper";
 
 // ─── MARGIN WORLD ────────────────────────────────────────────────────────────
 // The living right rail where annotations surface as floating steam.
@@ -48,8 +49,30 @@ export default function MarginWorld({
       {/* ── Layer selector ─────────────────────────────────── */}
       <LayerSelector activeLayer={activeLayer} onLayerChange={onLayerChange} />
 
+      {/* ── Author Whispers — always visible ──────────────── */}
+      <div style={{ marginTop: "1.5rem", display: "flex", flexDirection: "column" }}>
+        <p
+          style={{
+            fontFamily: '"JetBrains Mono", monospace',
+            fontSize: "0.5rem",
+            letterSpacing: "0.2em",
+            color: "rgba(201,168,76,0.4)",
+            textTransform: "uppercase",
+            marginBottom: "0.75rem",
+          }}
+        >
+          Author
+        </p>
+        {DEMO_WHISPERS.map((whisper) => (
+          <AuthorWhisper key={whisper.id} whisper={whisper} />
+        ))}
+      </div>
+
+      {/* ── Brass divider ─────────────────────────────────── */}
+      <div className="brass-line" style={{ margin: "1rem 0" }} />
+
       {/* ── Annotations ────────────────────────────────────── */}
-      <div style={{ marginTop: "2rem", display: "flex", flexDirection: "column", gap: "1rem" }}>
+      <div style={{ marginTop: "0.5rem", display: "flex", flexDirection: "column", gap: "1rem" }}>
         <AnimatePresence mode="popLayout">
           {sorted.length === 0 ? (
             <motion.div

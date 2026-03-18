@@ -6,6 +6,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import type { InkType, Annotation, TextSelection } from "@/lib/types";
 import { INK_CONFIGS } from "@/lib/types";
 import { saveAnnotation, captureSelection } from "@/lib/ink";
+import { playInkScratch } from "@/lib/sound";
 
 // ─── ANNOTATABLE TEXT ────────────────────────────────────────────────────────
 // A single paragraph with full annotation capability.
@@ -75,6 +76,7 @@ export default function AnnotatableText({
       ""
     );
 
+    playInkScratch(activeInkType);
     onAnnotationCreated(annotation);
     setJustAnnotated(annotation.id);
     setTimeout(() => setJustAnnotated(null), 1200);
@@ -93,6 +95,7 @@ export default function AnnotatableText({
       noteValue
     );
 
+    playInkScratch(activeInkType);
     onAnnotationCreated(annotation);
     setJustAnnotated(annotation.id);
     setTimeout(() => setJustAnnotated(null), 1200);

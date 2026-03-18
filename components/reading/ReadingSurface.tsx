@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback, useRef } from "react";
+import { playArchiveMode } from "@/lib/sound";
 import { motion, AnimatePresence } from "framer-motion";
 import type { Annotation, InkType, MarginLayer, Chapter } from "@/lib/types";
 import {
@@ -64,7 +65,10 @@ export default function ReadingSurface({ chapter }: ReadingSurfaceProps) {
       if (progress > 0.92 && !isComplete) {
         markChapterComplete(chapter.slug);
         setIsComplete(true);
-        setTimeout(() => setShowCompletionEvent(true), 800);
+        setTimeout(() => {
+          playArchiveMode();
+          setShowCompletionEvent(true);
+        }, 800);
       }
     };
 
@@ -130,7 +134,9 @@ export default function ReadingSurface({ chapter }: ReadingSurfaceProps) {
         style={{
           display: "flex",
           justifyContent: "center",
-          paddingLeft: "52px",  // ink toolbar width
+          // On mobile: no left padding (toolbar collapses to bottom)
+          // On desktop: offset for left toolbar
+          paddingLeft: "var(--toolbar-offset, 52px)",
         }}
       >
         {/* ── Reading column ──────────────────────────────── */}
@@ -142,7 +148,8 @@ export default function ReadingSurface({ chapter }: ReadingSurfaceProps) {
             width: "100%",
             maxWidth: "72ch",
             minHeight: "100vh",
-            padding: "8rem 3rem 12rem",
+            // Mobile: tighter padding; desktop: generous
+            padding: "clamp(5rem, 10vw, 8rem) clamp(1.25rem, 5vw, 3rem) 12rem",
             borderLeft: "1px solid rgba(201,168,76,0.08)",
             borderRight: "1px solid rgba(201,168,76,0.08)",
             boxShadow: "0 0 60px rgba(44,26,0,0.4)",
@@ -235,17 +242,8 @@ export default function ReadingSurface({ chapter }: ReadingSurfaceProps) {
           </div>
         </div>
 
-        {/* ── Margin World — right rail ────────────────────── */}
-        <div
-          style={{
-            flex: "0 0 auto",
-            position: "sticky",
-            top: 0,
-            height: "100vh",
-            overflowY: "auto",
-            paddingRight: "1rem",
-          }}
-        >
+        {/* ── Margin World — hidden on mobile, right rail on desktop ── */}
+        <div className="margin-world-rail">
           <MarginWorld
             annotations={annotations}
             chapterSlug={chapter.slug}
@@ -378,90 +376,181 @@ function CompletionEvent({
   chapter: Chapter;
   onDismiss: () => void;
 }) {
+  const [phase, setPhase] = useState<"seal" | "reveal">("seal");
+
+  useEffect(() => {
+    const t = setTimeout(() => setPhase("reveal"), 1200);
+    return () => clearTimeout(t);
+  }, []);
+
   return (
     <motion.div
-      className="fixed inset-0 z-50 question-chamber-backdrop flex items-center justify-center"
+      className="fixed inset-0 z-50 flex items-center justify-center"
+      style={{ backgroundColor: "rgba(13,11,8,0.97)" }}
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
-      exit={{ opacity: 0 }}
+      exit={{ opacity: 0, transition: { duration: 0.6 } }}
+      transition={{ duration: 0.4 }}
     >
+      {/* ── Expanding brass ring ────────────────────────── */}
+      <motion.div
+        className="absolute"
+        style={{
+          width: "300px",
+          height: "300px",
+          borderRadius: "50%",
+          border: "1px solid rgba(201,168,76,0.2)",
+        }}
+        initial={{ scale: 0, opacity: 0.8 }}
+        animate={{ scale: 3.5, opacity: 0 }}
+        transition={{ duration: 2.5, ease: "easeOut" }}
+      />
+      <motion.div
+        className="absolute"
+        style={{
+          width: "300px",
+          height: "300px",
+          borderRadius: "50%",
+          border: "1px solid rgba(201,168,76,0.15)",
+        }}
+        initial={{ scale: 0, opacity: 0.6 }}
+        animate={{ scale: 2.5, opacity: 0 }}
+        transition={{ duration: 2, delay: 0.3, ease: "easeOut" }}
+      />
+
+      {/* ── Main panel ──────────────────────────────────── */}
       <motion.div
         style={{
-          maxWidth: "440px",
+          maxWidth: "480px",
           width: "100%",
-          margin: "0 1rem",
-          background: "#0D0B08",
-          border: "1px solid rgba(201,168,76,0.4)",
-          boxShadow: "0 0 60px rgba(201,168,76,0.1), 0 32px 80px rgba(0,0,0,0.95)",
-          padding: "2.5rem 2rem",
+          margin: "0 1.5rem",
           textAlign: "center",
-          borderRadius: "2px",
+          position: "relative",
+          zIndex: 2,
         }}
-        initial={{ opacity: 0, scale: 0.94, y: 24 }}
-        animate={{ opacity: 1, scale: 1, y: 0 }}
-        exit={{ opacity: 0, scale: 0.94, y: 24 }}
-        transition={{ duration: 0.5, ease: [0.2, 0, 0.1, 1] }}
+        initial={{ opacity: 0, y: 32 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.8, delay: 0.3, ease: [0.2, 0, 0.1, 1] }}
       >
-        <p
+        {/* Label */}
+        <motion.p
           style={{
             fontFamily: '"JetBrains Mono", monospace',
             fontSize: "0.55rem",
-            letterSpacing: "0.3em",
-            color: "rgba(201,168,76,0.5)",
+            letterSpacing: "0.35em",
+            color: "rgba(201,168,76,0.4)",
             textTransform: "uppercase",
-            marginBottom: "1.5rem",
-          }}
-        >
-          Chapter Complete — First Read
-        </p>
-
-        <div className="brass-line" style={{ marginBottom: "1.5rem" }} />
-
-        <p
-          style={{
-            fontFamily: '"EB Garamond", Garamond, Georgia, serif',
-            fontSize: "1.15rem",
-            fontStyle: "italic",
-            color: "rgba(245,230,200,0.75)",
-            lineHeight: 1.7,
-            marginBottom: "0.5rem",
-          }}
-        >
-          You have completed your first read
-          <br />
-          of Chapter {chapter.romanNumeral}.
-        </p>
-
-        <p
-          style={{
-            fontFamily: '"EB Garamond", Garamond, Georgia, serif',
-            fontSize: "0.85rem",
-            color: "rgba(245,230,200,0.3)",
-            fontStyle: "italic",
             marginBottom: "2rem",
           }}
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.5 }}
         >
-          Your marks are sealed here.
-          The chapter enters Archive Mode.
-        </p>
+          First Read · Sealed
+        </motion.p>
 
-        <button
+        {/* Brass ornament */}
+        <motion.div
+          style={{ marginBottom: "1.5rem" }}
+          initial={{ scaleX: 0, opacity: 0 }}
+          animate={{ scaleX: 1, opacity: 1 }}
+          transition={{ delay: 0.7, duration: 0.8 }}
+        >
+          <div className="brass-line" />
+        </motion.div>
+
+        {/* Chapter identity */}
+        <AnimatePresence>
+          {phase === "reveal" && (
+            <motion.div
+              initial={{ opacity: 0, y: 12 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.7, ease: "easeOut" }}
+            >
+              <p
+                style={{
+                  fontFamily: '"JetBrains Mono", monospace',
+                  fontSize: "0.55rem",
+                  letterSpacing: "0.25em",
+                  color: "rgba(201,168,76,0.5)",
+                  textTransform: "uppercase",
+                  marginBottom: "0.75rem",
+                }}
+              >
+                Chapter {chapter.romanNumeral}
+              </p>
+              <p
+                style={{
+                  fontFamily: '"EB Garamond", Garamond, Georgia, serif',
+                  fontSize: "clamp(1.25rem, 4vw, 1.75rem)",
+                  fontStyle: "italic",
+                  color: "rgba(245,230,200,0.85)",
+                  lineHeight: 1.4,
+                  marginBottom: "0.5rem",
+                  letterSpacing: "-0.01em",
+                }}
+              >
+                {chapter.title}
+              </p>
+              <p
+                style={{
+                  fontFamily: '"EB Garamond", Garamond, Georgia, serif',
+                  fontSize: "0.95rem",
+                  fontStyle: "italic",
+                  color: "rgba(245,230,200,0.3)",
+                  lineHeight: 1.6,
+                  marginBottom: "2.5rem",
+                }}
+              >
+                Your marks are in the Archive.
+                <br />
+                They will be here when you return.
+              </p>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        {/* Bottom rule */}
+        <motion.div
+          style={{ marginBottom: "2rem" }}
+          initial={{ scaleX: 0, opacity: 0 }}
+          animate={{ scaleX: 1, opacity: 1 }}
+          transition={{ delay: 1.4, duration: 0.8 }}
+        >
+          <div className="brass-line" />
+        </motion.div>
+
+        {/* Acknowledge */}
+        <motion.button
           onClick={onDismiss}
           style={{
             fontFamily: '"JetBrains Mono", monospace',
             fontSize: "0.6rem",
-            letterSpacing: "0.2em",
+            letterSpacing: "0.25em",
             color: "#C9A84C",
             background: "transparent",
-            border: "1px solid rgba(201,168,76,0.4)",
-            padding: "0.6rem 1.5rem",
+            border: "1px solid rgba(201,168,76,0.35)",
+            padding: "0.75rem 2rem",
             cursor: "pointer",
             borderRadius: "1px",
             textTransform: "uppercase",
+            position: "relative",
           }}
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 1.8 }}
+          whileHover={{
+            borderColor: "rgba(201,168,76,0.8)",
+            boxShadow: "0 0 20px rgba(201,168,76,0.15)",
+          }}
+          whileTap={{ scale: 0.98 }}
         >
-          Acknowledge
-        </button>
+          {/* Corner accents */}
+          {["top-0 left-0 border-t border-l","top-0 right-0 border-t border-r","bottom-0 left-0 border-b border-l","bottom-0 right-0 border-b border-r"].map((cls, i) => (
+            <span key={i} className={`absolute w-2 h-2 ${cls}`} style={{ borderColor: "#C9A84C" }} />
+          ))}
+          I have read this chapter
+        </motion.button>
       </motion.div>
     </motion.div>
   );
