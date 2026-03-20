@@ -1,4 +1,4 @@
-// ─── THE SCRIPTORIUM — TYPE SYSTEM ───────────────────────────────────────────
+// ─── TINTAXIS — TYPE SYSTEM ───────────────────────────────────────────
 // Every annotation, every interaction, every state is typed here.
 // This is the vocabulary of the platform.
 

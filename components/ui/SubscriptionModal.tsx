@@ -1,7 +1,7 @@
 "use client";
 
 // ─── SUBSCRIPTION MODAL ───────────────────────────────────────────────────────
-// The Scriptorium's four tiers. Shown when a reader tries to access a gated
+// Tintaxis's four tiers. Shown when a reader tries to access a gated
 // feature. Phase 1: "Join the Waitlist" — no live payments yet.
 // Phase 2: Stripe or Lemon Squeezy integration.
 
@@ -212,7 +212,7 @@ export default function SubscriptionModal({
                   color: "rgba(245,230,200,0.35)",
                 }}
               >
-                The Scriptorium is a living book. Choose how deeply you want to live inside it.
+                Tintaxis is a living book. Choose how deeply you want to live inside it.
               </p>
             </div>
 
@@ -294,7 +294,7 @@ export default function SubscriptionModal({
 
               {/* Waitlist CTA */}
               <a
-                href="mailto:chicomontecristi@gmail.com?subject=Scriptorium Waitlist"
+                href="mailto:chicomontecristi@gmail.com?subject=Tintaxis Waitlist"
                 style={{ textDecoration: "none" }}
               >
                 <motion.div

@@ -5,7 +5,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import Link from "next/link";
 import type { Chapter } from "@/lib/types";
 import ReadingSurface from "@/components/reading/ReadingSurface";
-import ScriptoriumLogo from "@/components/ui/ScriptoriumLogo";
+import TintaxisLogo from "@/components/ui/TintaxisLogo";
 
 // ─── CHAPTER PAGE CLIENT ─────────────────────────────────────────────────────
 // Handles the mechanical iris open transition, then mounts the reading surface.
@@ -125,11 +125,11 @@ function SealedChamber({ chapter }: { chapter: Chapter }) {
         }}
       />
 
-      {/* ── Nav — Scriptorium link ── */}
+      {/* ── Nav — Tintaxis link ── */}
       <div className="absolute top-6 left-6">
         <Link href="/" style={{ textDecoration: "none" }}>
           <div style={{ display: "flex", alignItems: "center", gap: "8px", opacity: 0.5 }}>
-            <ScriptoriumLogo size={20} />
+            <TintaxisLogo size={20} />
             <span
               style={{
                 fontFamily: '"EB Garamond", Garamond, Georgia, serif',
@@ -138,7 +138,7 @@ function SealedChamber({ chapter }: { chapter: Chapter }) {
                 color: "rgba(245,230,200,0.6)",
               }}
             >
-              The Scriptorium
+              Tintaxis
             </span>
           </div>
         </Link>

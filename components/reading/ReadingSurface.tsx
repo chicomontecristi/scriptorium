@@ -26,7 +26,7 @@ import InkTutorial from "@/components/ui/InkTutorial";
 import Link from "next/link";
 
 // ─── READING SURFACE ─────────────────────────────────────────────────────────
-// The complete reading environment. This is the heart of The Scriptorium.
+// The complete reading environment. This is the heart of Tintaxis.
 // All subsystems are orchestrated here.
 
 interface ReadingSurfaceProps {

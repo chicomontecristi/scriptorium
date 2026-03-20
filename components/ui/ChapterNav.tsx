@@ -4,11 +4,11 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
 import type { Chapter } from "@/lib/types";
-import ScriptoriumLogo from "./ScriptoriumLogo";
+import TintaxisLogo from "./TintaxisLogo";
 
 // ─── CHAPTER NAVIGATION ───────────────────────────────────────────────────────
 // Minimal top bar. Hides on scroll down, reveals on scroll up.
-// Contains: Scriptorium wordmark (links home) + chapter identity.
+// Contains: Tintaxis wordmark (links home) + chapter identity.
 
 interface ChapterNavProps {
   chapter: Chapter;
@@ -75,7 +75,7 @@ export default function ChapterNav({ chapter }: ChapterNavProps) {
               margin: "0 auto",
             }}
           >
-            {/* ── Left: Scriptorium wordmark ──────────────── */}
+            {/* ── Left: Tintaxis wordmark ──────────────── */}
             <Link href="/" style={{ textDecoration: "none" }}>
               <motion.div
                 style={{
@@ -87,7 +87,7 @@ export default function ChapterNav({ chapter }: ChapterNavProps) {
                 whileHover={{ opacity: 0.9 }}
                 initial={{ opacity: 0.7 }}
               >
-                <ScriptoriumLogo size={22} />
+                <TintaxisLogo size={22} />
                 <span
                   style={{
                     fontFamily: '"EB Garamond", Garamond, Georgia, serif',
@@ -96,7 +96,7 @@ export default function ChapterNav({ chapter }: ChapterNavProps) {
                     color: "rgba(245,230,200,0.65)",
                   }}
                 >
-                  The Scriptorium
+                  Tintaxis
                 </span>
               </motion.div>
             </Link>

@@ -20,7 +20,7 @@ export function generateStaticParams() {
 export default function Image({ params }: Props) {
   const chapter = getChapter(params.slug);
 
-  const title = chapter?.title ?? "The Scriptorium";
+  const title = chapter?.title ?? "Tintaxis";
   const roman = chapter?.romanNumeral ?? "";
   const subtitle = chapter?.subtitle ?? "";
   const isLocked = chapter?.isLocked ?? false;
@@ -86,7 +86,7 @@ export default function Image({ params }: Props) {
               gap: "12px",
             }}
           >
-            <span>THE SCRIPTORIUM</span>
+            <span>TINTAXIS</span>
             <span style={{ color: "rgba(201,168,76,0.2)" }}>·</span>
             <span>THE LIFE OF ROBI DRACO ROSA</span>
           </div>

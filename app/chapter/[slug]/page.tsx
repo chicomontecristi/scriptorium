@@ -21,7 +21,7 @@ export async function generateMetadata({ params }: Props) {
   if (!chapter) return {};
 
   return {
-    title: `Chapter ${chapter.romanNumeral}: ${chapter.title} — The Scriptorium`,
+    title: `Chapter ${chapter.romanNumeral}: ${chapter.title} — Tintaxis`,
     description: chapter.subtitle,
   };
 }

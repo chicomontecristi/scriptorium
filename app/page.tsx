@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import Link from "next/link";
-import ScriptoriumLogo from "@/components/ui/ScriptoriumLogo";
+import TintaxisLogo from "@/components/ui/TintaxisLogo";
 
 // ─── INITIATION SCREEN ─────────────────────────────────────────────────────
 // The entry point. The reader is not yet a reader — they are a supplicant.
@@ -15,12 +15,12 @@ const TAGLINE_LINES = [
   "You are about to read differently.",
 ];
 
-const EDITION_TEXT = "INAUGURAL EDITION";
+const EDITION_TEXT = "TINTAXIS · INAUGURAL EDITION";
 const SUBJECT_LINE = "THE LIFE OF ROBI DRACO ROSA";
 
 // Mechanical boot-up sequence for the decorative UI chrome
 const BOOT_LINES = [
-  "ARCHIVE SYSTEM v2250.03 ... ONLINE",
+  "TINTAXIS v0.1.0 ... ONLINE",
   "INK CHAMBER PRESSURIZED ... READY",
   "MARGIN WORLD INITIALIZED ... STABLE",
   "QUESTION QUEUE OPEN ... LISTENING",
@@ -157,7 +157,7 @@ export default function InitiationScreen() {
           )}
         </AnimatePresence>
 
-        {/* THE SCRIPTORIUM sigil + wordmark */}
+        {/* TINTAXIS sigil + wordmark */}
         <AnimatePresence>
           {titleVisible && (
             <motion.div
@@ -178,7 +178,7 @@ export default function InitiationScreen() {
                 }}
                 transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
               >
-                <ScriptoriumLogo size={72} />
+                <TintaxisLogo size={72} />
               </motion.div>
 
               <h1
@@ -193,7 +193,7 @@ export default function InitiationScreen() {
                     "0 0 60px rgba(201,168,76,0.2), 0 2px 4px rgba(0,0,0,0.8)",
                 }}
               >
-                THE SCRIPTORIUM
+                TINTAXIS
               </h1>
             </motion.div>
           )}

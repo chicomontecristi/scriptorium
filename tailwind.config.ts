@@ -8,7 +8,7 @@ const config: Config = {
   ],
   theme: {
     extend: {
-      // ─── SCRIPTORIUM COLOR SYSTEM ───────────────────────────────
+      // ─── TINTAXIS COLOR SYSTEM ───────────────────────────────
       colors: {
         vault:    "#0D0B08",   // Vault Black      — deepest background
         archive:  "#2C1A00",   // Archive Amber    — panel surfaces

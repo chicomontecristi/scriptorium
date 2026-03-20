@@ -13,7 +13,7 @@
 import { useEffect, useState, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 
-const STORAGE_KEY = "scriptorium_tutorial_v1";
+const STORAGE_KEY = "tintaxis_tutorial_v1";
 
 type VisualComponent = React.ComponentType;
 

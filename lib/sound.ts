@@ -1,4 +1,4 @@
-// ─── THE SCRIPTORIUM — SOUND DESIGN ─────────────────────────────────────────
+// ─── TINTAXIS — SOUND DESIGN ─────────────────────────────────────────
 // Web Audio API only. No external files. No loading states.
 // All sounds synthesized in real-time — they feel like the platform itself.
 //

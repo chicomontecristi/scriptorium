@@ -6,7 +6,7 @@
 import { ImageResponse } from "next/og";
 
 export const runtime = "edge";
-export const alt = "The Scriptorium — A Living Reading Platform";
+export const alt = "Tintaxis — A Living Reading Platform";
 export const size = { width: 1200, height: 630 };
 export const contentType = "image/png";
 
@@ -126,7 +126,7 @@ export default async function Image() {
               textShadow: "0 0 60px rgba(201,168,76,0.25)",
             }}
           >
-            THE SCRIPTORIUM
+            TINTAXIS
           </div>
 
           {/* Brass rule */}

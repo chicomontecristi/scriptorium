@@ -1,17 +1,17 @@
-// ─── SCRIPTORIUM SIGIL — THE BRASS MARK ──────────────────────────────────────
+// ─── TINTAXIS SIGIL — THE BRASS MARK ──────────────────────────────────────
 // Mechanical eye within a gear ring.
 // Used as wordmark companion and standalone favicon.
 
-interface ScriptoriumLogoProps {
+interface TintaxisLogoProps {
   size?: number;
   className?: string;
   animate?: boolean;
 }
 
-export default function ScriptoriumLogo({
+export default function TintaxisLogo({
   size = 32,
   className = "",
-}: ScriptoriumLogoProps) {
+}: TintaxisLogoProps) {
   return (
     <svg
       xmlns="http://www.w3.org/2000/svg"
@@ -20,7 +20,7 @@ export default function ScriptoriumLogo({
       width={size}
       height={size}
       className={className}
-      aria-label="The Scriptorium"
+      aria-label="Tintaxis"
       role="img"
     >
       {/* ── Gear ring (12 teeth at 30° intervals) ── */}

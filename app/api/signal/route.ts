@@ -4,7 +4,7 @@
 //
 // Required environment variables:
 //   SIGNAL_TO_EMAIL   — The author's email (where questions are sent)
-//   SIGNAL_FROM_EMAIL — The sending address (e.g. signal@thescriptorium.com)
+//   SIGNAL_FROM_EMAIL — The sending address (e.g. signal@tintaxis.io)
 //   RESEND_API_KEY    — Resend.com API key (free tier works for Phase 1)
 
 import { NextRequest, NextResponse } from "next/server";
@@ -28,14 +28,14 @@ export async function POST(req: NextRequest) {
 
     // ── Phase 1: Email via Resend ──────────────────────────
     const toEmail = process.env.SIGNAL_TO_EMAIL;
-    const fromEmail = process.env.SIGNAL_FROM_EMAIL || "signal@thescriptorium.com";
+    const fromEmail = process.env.SIGNAL_FROM_EMAIL || "signal@tintaxis.io";
     const resendKey = process.env.RESEND_API_KEY;
 
     if (toEmail && resendKey) {
       const emailBody = {
         from: fromEmail,
         to: toEmail,
-        subject: `[THE SCRIPTORIUM] Signal — Chapter: ${chapterSlug}`,
+        subject: `[TINTAXIS] Signal — Chapter: ${chapterSlug}`,
         html: buildEmailHtml({ chapterSlug, selectedText, question, readerEmail }),
       };
 
@@ -99,7 +99,7 @@ function buildEmailHtml({
 <body>
   <div class="container">
     <div class="header">
-      <div class="label">The Scriptorium — Signal Ink</div>
+      <div class="label">Tintaxis — Signal Ink</div>
       <div class="title">A reader has sent a question into the Archive.</div>
     </div>
 

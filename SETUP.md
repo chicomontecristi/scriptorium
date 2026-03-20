@@ -1,4 +1,4 @@
-# THE SCRIPTORIUM — Setup Guide
+# TINTAXIS — Setup Guide
 
 ## Run Locally (takes 3 minutes)
 
@@ -6,7 +6,7 @@
 
 ```bash
 # 1. Navigate to the project folder
-cd path/to/scriptorium
+cd path/to/tintaxis
 
 # 2. Install dependencies
 npm install
@@ -61,28 +61,28 @@ For section breaks (scene breaks):
 ## Deploy to Vercel
 
 **Step 1 — Create a GitHub repo**
-Go to github.com → New repository → name it `scriptorium` → Create.
-Then in PowerShell (inside the scriptorium folder):
+Go to github.com → New repository → name it `tintaxis` → Create.
+Then in PowerShell (inside tintaxis folder):
 ```bash
 git init
 git add .
-git commit -m "Initial build — The Scriptorium Phase 1"
-git remote add origin https://github.com/YOUR_USERNAME/scriptorium.git
+git commit -m "Initial build — Tintaxis Phase 1"
+git remote add origin https://github.com/YOUR_USERNAME/tintaxis.git
 git push -u origin main
 ```
 
 **Step 2 — Deploy on Vercel**
-Go to vercel.com → Sign up with GitHub → New Project → Import your `scriptorium` repo → Deploy.
+Go to vercel.com → Sign up with GitHub → New Project → Import your `tintaxis` repo → Deploy.
 Vercel auto-detects Next.js. No config needed.
 
 **Step 3 — Add environment variables**
 In Vercel dashboard → Your project → Settings → Environment Variables:
 - `RESEND_API_KEY` → your Resend key
 - `SIGNAL_TO_EMAIL` → your email
-- `SIGNAL_FROM_EMAIL` → signal@thescriptorium.com
+- `SIGNAL_FROM_EMAIL` → signal@tintaxis.io
 
 **Step 4 — Custom domain (optional)**
-Vercel dashboard → Your project → Settings → Domains → Add `thescriptorium.com`
+Vercel dashboard → Your project → Settings → Domains → Add `tintaxis.io`
 
 ---
 
@@ -95,7 +95,7 @@ Vercel dashboard → Your project → Settings → Domains → Add `thescriptori
    ```
    RESEND_API_KEY=re_your_key
    SIGNAL_TO_EMAIL=you@youremail.com
-   SIGNAL_FROM_EMAIL=signal@thescriptorium.com
+   SIGNAL_FROM_EMAIL=signal@tintaxis.io
    ```
 
 ---

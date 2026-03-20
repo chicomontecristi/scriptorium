@@ -6,10 +6,10 @@
 import type { Annotation, SignalQuestion, ReaderState, InkType, TextSelection } from "./types";
 
 const STORAGE_KEYS = {
-  annotations: (chapterSlug: string) => `scriptorium:annotations:${chapterSlug}`,
-  readerState: (chapterSlug: string) => `scriptorium:state:${chapterSlug}`,
-  questions:   (chapterSlug: string) => `scriptorium:questions:${chapterSlug}`,
-  allChapters: "scriptorium:chapters:read",
+  annotations: (chapterSlug: string) => `tintaxis:annotations:${chapterSlug}`,
+  readerState: (chapterSlug: string) => `tintaxis:state:${chapterSlug}`,
+  questions:   (chapterSlug: string) => `tintaxis:questions:${chapterSlug}`,
+  allChapters: "tintaxis:chapters:read",
 } as const;
 
 // ─── ID GENERATION ──────────────────────────────────────────────────────────
