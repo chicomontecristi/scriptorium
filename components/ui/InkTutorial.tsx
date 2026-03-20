@@ -5,38 +5,51 @@
 // Three steps: Select → Ink → Archive.
 // Each step has a visual demo and a one-line instruction.
 // Does not block reading — dismissable at any point.
+//
+// FIX: STEPS stores component REFERENCES (not pre-created JSX elements).
+// <Visual key={step} /> forces a full remount on every step change so
+// internal state (highlighted, activeIndex, phase) resets cleanly.
 
 import { useEffect, useState, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 
 const STORAGE_KEY = "scriptorium_tutorial_v1";
 
-const STEPS = [
+type VisualComponent = React.ComponentType;
+
+interface StepConfig {
+  id: string;
+  label: string;
+  headline: string;
+  body: string;
+  Visual: VisualComponent;
+}
+
+const STEPS: StepConfig[] = [
   {
     id: "select",
     label: "01 — SELECT",
     headline: "Choose any passage.",
     body: "Highlight words that move you, trouble you, or demand a second look. The text is yours to mark.",
-    visual: <SelectDemo />,
+    Visual: SelectDemo,
   },
   {
     id: "ink",
     label: "02 — INK",
     headline: "Six inks. Six ways of reading.",
     body: "Each ink carries a different intention — curiosity, memory, a private thought, a question sent directly to the author.",
-    visual: <InkDemo />,
+    Visual: InkDemo,
   },
   {
     id: "archive",
     label: "03 — ARCHIVE",
     headline: "Your marks live in the Archive.",
     body: "Every annotation is sealed into this chapter. Return to any page and your ink will be exactly where you left it.",
-    visual: <ArchiveDemo />,
+    Visual: ArchiveDemo,
   },
 ];
 
 interface InkTutorialProps {
-  // Pass false to skip for returning readers (saves the localStorage check at parent level)
   enabled?: boolean;
 }
 
@@ -46,14 +59,11 @@ export default function InkTutorial({ enabled = true }: InkTutorialProps) {
 
   useEffect(() => {
     if (!enabled) return;
-    // Check if tutorial has been seen
     try {
       if (localStorage.getItem(STORAGE_KEY)) return;
     } catch {
-      return; // localStorage unavailable
+      return;
     }
-
-    // Show after 2.5s — let the reader get oriented first
     const timer = setTimeout(() => setVisible(true), 2500);
     return () => clearTimeout(timer);
   }, [enabled]);
@@ -79,11 +89,14 @@ export default function InkTutorial({ enabled = true }: InkTutorialProps) {
     setStep((s) => Math.max(0, s - 1));
   }, []);
 
+  const currentStep = STEPS[step];
+  const { Visual } = currentStep;
+
   return (
     <AnimatePresence>
       {visible && (
         <>
-          {/* ── Backdrop ── */}
+          {/* Backdrop */}
           <motion.div
             className="fixed inset-0 z-40"
             style={{ backgroundColor: "rgba(13,11,8,0.85)", backdropFilter: "blur(3px)" }}
@@ -94,15 +107,16 @@ export default function InkTutorial({ enabled = true }: InkTutorialProps) {
             onClick={dismiss}
           />
 
-          {/* ── Tutorial card ── */}
+          {/* Tutorial card */}
           <motion.div
             className="fixed z-40"
             style={{
-              // Center on screen
               top: "50%",
               left: "50%",
               transform: "translate(-50%, -50%)",
               width: "min(480px, calc(100vw - 2rem))",
+              maxHeight: "calc(100dvh - 2rem)",
+              overflowY: "auto",
             }}
             initial={{ opacity: 0, y: 20, scale: 0.96 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
@@ -110,18 +124,21 @@ export default function InkTutorial({ enabled = true }: InkTutorialProps) {
             transition={{ duration: 0.5, ease: [0.2, 0, 0.1, 1] }}
             onClick={(e) => e.stopPropagation()}
           >
-            {/* ── Card border ── */}
             <div
               style={{
                 border: "1px solid rgba(201,168,76,0.22)",
                 background: "rgba(13,11,8,0.98)",
                 padding: "clamp(1.5rem, 5vw, 2.2rem)",
                 position: "relative",
-                overflow: "hidden",
               }}
             >
               {/* Corner accents */}
-              {["top-0 left-0 border-t border-l", "top-0 right-0 border-t border-r", "bottom-0 left-0 border-b border-l", "bottom-0 right-0 border-b border-r"].map((cls, i) => (
+              {[
+                "top-0 left-0 border-t border-l",
+                "top-0 right-0 border-t border-r",
+                "bottom-0 left-0 border-b border-l",
+                "bottom-0 right-0 border-b border-r",
+              ].map((cls, i) => (
                 <span
                   key={i}
                   className={`absolute w-3 h-3 ${cls}`}
@@ -129,7 +146,7 @@ export default function InkTutorial({ enabled = true }: InkTutorialProps) {
                 />
               ))}
 
-              {/* ── Step label ── */}
+              {/* Step label */}
               <AnimatePresence mode="wait">
                 <motion.p
                   key={`label-${step}`}
@@ -146,11 +163,11 @@ export default function InkTutorial({ enabled = true }: InkTutorialProps) {
                   exit={{ opacity: 0 }}
                   transition={{ duration: 0.3 }}
                 >
-                  {STEPS[step].label}
+                  {currentStep.label}
                 </motion.p>
               </AnimatePresence>
 
-              {/* ── Visual demo area ── */}
+              {/* Visual demo — key={step} forces full remount on step change */}
               <AnimatePresence mode="wait">
                 <motion.div
                   key={`visual-${step}`}
@@ -169,11 +186,11 @@ export default function InkTutorial({ enabled = true }: InkTutorialProps) {
                   exit={{ opacity: 0, x: -12 }}
                   transition={{ duration: 0.35, ease: "easeOut" }}
                 >
-                  {STEPS[step].visual}
+                  <Visual key={step} />
                 </motion.div>
               </AnimatePresence>
 
-              {/* ── Headline ── */}
+              {/* Headline + body */}
               <AnimatePresence mode="wait">
                 <motion.div
                   key={`content-${step}`}
@@ -193,7 +210,7 @@ export default function InkTutorial({ enabled = true }: InkTutorialProps) {
                       letterSpacing: "-0.01em",
                     }}
                   >
-                    {STEPS[step].headline}
+                    {currentStep.headline}
                   </h3>
                   <p
                     style={{
@@ -205,12 +222,12 @@ export default function InkTutorial({ enabled = true }: InkTutorialProps) {
                       marginBottom: "1.75rem",
                     }}
                   >
-                    {STEPS[step].body}
+                    {currentStep.body}
                   </p>
                 </motion.div>
               </AnimatePresence>
 
-              {/* ── Progress dots ── */}
+              {/* Progress dots */}
               <div
                 style={{
                   display: "flex",
@@ -222,17 +239,6 @@ export default function InkTutorial({ enabled = true }: InkTutorialProps) {
                 {STEPS.map((_, i) => (
                   <motion.div
                     key={i}
-                    style={{
-                      width: i === step ? "20px" : "6px",
-                      height: "6px",
-                      borderRadius: "3px",
-                      backgroundColor:
-                        i === step
-                          ? "rgba(201,168,76,0.8)"
-                          : i < step
-                          ? "rgba(201,168,76,0.35)"
-                          : "rgba(201,168,76,0.12)",
-                    }}
                     animate={{
                       width: i === step ? 20 : 6,
                       backgroundColor:
@@ -242,12 +248,13 @@ export default function InkTutorial({ enabled = true }: InkTutorialProps) {
                           ? "rgba(201,168,76,0.35)"
                           : "rgba(201,168,76,0.12)",
                     }}
+                    style={{ height: "6px", borderRadius: "3px" }}
                     transition={{ duration: 0.25 }}
                   />
                 ))}
               </div>
 
-              {/* ── Navigation ── */}
+              {/* Navigation */}
               <div style={{ display: "flex", gap: "0.75rem", alignItems: "center" }}>
                 {step > 0 && (
                   <motion.button
@@ -294,14 +301,21 @@ export default function InkTutorial({ enabled = true }: InkTutorialProps) {
                   }}
                   whileTap={{ scale: 0.98 }}
                 >
-                  {/* Corner accents */}
-                  {["top-0 left-0 border-t border-l", "top-0 right-0 border-t border-r", "bottom-0 left-0 border-b border-l", "bottom-0 right-0 border-b border-r"].map((cls, i) => (
-                    <span key={i} className={`absolute w-1.5 h-1.5 ${cls}`} style={{ borderColor: "#C9A84C" }} />
+                  {[
+                    "top-0 left-0 border-t border-l",
+                    "top-0 right-0 border-t border-r",
+                    "bottom-0 left-0 border-b border-l",
+                    "bottom-0 right-0 border-b border-r",
+                  ].map((cls, i) => (
+                    <span
+                      key={i}
+                      className={`absolute w-1.5 h-1.5 ${cls}`}
+                      style={{ borderColor: "#C9A84C" }}
+                    />
                   ))}
                   {step < STEPS.length - 1 ? "Next →" : "Begin Reading"}
                 </motion.button>
 
-                {/* Skip — always visible */}
                 <button
                   onClick={dismiss}
                   style={{
@@ -329,18 +343,19 @@ export default function InkTutorial({ enabled = true }: InkTutorialProps) {
 }
 
 // ─── STEP VISUALS ─────────────────────────────────────────────────────────────
+// Function declarations are hoisted — safe to reference above before definition.
+// Each receives key={step} from parent so state fully resets on navigation.
 
 function SelectDemo() {
   const [highlighted, setHighlighted] = useState(false);
 
   useEffect(() => {
-    // Animate the selection appearing
     const t1 = setTimeout(() => setHighlighted(true), 400);
     return () => clearTimeout(t1);
   }, []);
 
   const words = ["Every", "song", "is", "a", "country.", "I", "was", "born", "stateless."];
-  const highlightRange = [0, 4]; // "Every song is a country."
+  const highlightRange = [0, 4];
 
   return (
     <div
@@ -348,7 +363,6 @@ function SelectDemo() {
         fontFamily: '"EB Garamond", Garamond, Georgia, serif',
         fontSize: "1rem",
         fontStyle: "italic",
-        color: "rgba(245,230,200,0.6)",
         lineHeight: 1.6,
         textAlign: "center",
         maxWidth: "32ch",
@@ -360,16 +374,11 @@ function SelectDemo() {
         return (
           <motion.span
             key={i}
-            style={{
-              backgroundColor: isHighlighted ? "rgba(214,83,60,0.25)" : "transparent",
-              color: isHighlighted ? "rgba(245,230,200,0.95)" : "rgba(245,230,200,0.5)",
-              borderRadius: "1px",
-              padding: "0 1px",
-            }}
             animate={{
               backgroundColor: isHighlighted ? "rgba(214,83,60,0.25)" : "transparent",
               color: isHighlighted ? "rgba(245,230,200,0.95)" : "rgba(245,230,200,0.5)",
             }}
+            style={{ borderRadius: "1px", padding: "0 1px" }}
             transition={{ duration: 0.3, delay: i < 5 ? i * 0.06 : 0 }}
           >
             {word}{" "}
@@ -384,12 +393,12 @@ function InkDemo() {
   const [activeIndex, setActiveIndex] = useState(0);
 
   const inks = [
-    { label: "Ghost", color: "rgba(160,168,168,0.8)", desc: "Private thought" },
-    { label: "Ember", color: "rgba(214,83,60,0.8)", desc: "Strong reaction" },
-    { label: "Copper", color: "rgba(201,140,60,0.8)", desc: "Question, curiosity" },
-    { label: "Archive", color: "rgba(201,168,76,0.9)", desc: "Permanent mark" },
-    { label: "Signal", color: "rgba(0,229,204,0.8)", desc: "Ask the author" },
-    { label: "Memory", color: "rgba(106,60,196,0.8)", desc: "Personal memory" },
+    { label: "Ghost",   color: "rgba(160,168,168,0.8)" },
+    { label: "Ember",   color: "rgba(214,83,60,0.8)" },
+    { label: "Copper",  color: "rgba(201,140,60,0.8)" },
+    { label: "Archive", color: "rgba(201,168,76,0.9)" },
+    { label: "Signal",  color: "rgba(0,229,204,0.8)" },
+    { label: "Memory",  color: "rgba(106,60,196,0.8)" },
   ];
 
   useEffect(() => {
@@ -397,7 +406,7 @@ function InkDemo() {
       setActiveIndex((i) => (i + 1) % inks.length);
     }, 800);
     return () => clearInterval(interval);
-  }, []);
+  }, [inks.length]);
 
   return (
     <div style={{ display: "flex", gap: "0.6rem", alignItems: "center", flexWrap: "wrap", justifyContent: "center" }}>
@@ -409,13 +418,8 @@ function InkDemo() {
           transition={{ duration: 0.3 }}
         >
           <motion.div
-            style={{
-              width: "10px",
-              height: "10px",
-              borderRadius: "50%",
-              backgroundColor: ink.color,
-              boxShadow: i === activeIndex ? `0 0 12px ${ink.color}` : "none",
-            }}
+            style={{ width: "10px", height: "10px", borderRadius: "50%", backgroundColor: ink.color }}
+            animate={{ boxShadow: i === activeIndex ? `0 0 12px ${ink.color}` : "none" }}
           />
           <span
             style={{
@@ -440,21 +444,16 @@ function ArchiveDemo() {
   useEffect(() => {
     const t1 = setTimeout(() => setPhase(1), 300);
     const t2 = setTimeout(() => setPhase(2), 900);
-    return () => {
-      clearTimeout(t1);
-      clearTimeout(t2);
-    };
+    return () => { clearTimeout(t1); clearTimeout(t2); };
   }, []);
 
   return (
     <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-start", gap: "0.4rem", width: "100%", maxWidth: "280px" }}>
-      {/* Annotation entry */}
       <motion.div
         style={{
           display: "flex",
           alignItems: "flex-start",
           gap: "0.5rem",
-          opacity: phase >= 1 ? 1 : 0,
           borderLeft: "2px solid rgba(214,83,60,0.5)",
           paddingLeft: "0.6rem",
         }}
@@ -462,18 +461,17 @@ function ArchiveDemo() {
         transition={{ duration: 0.4 }}
       >
         <div>
-          <p style={{ fontFamily: '"JetBrains Mono", monospace', fontSize: "0.45rem", letterSpacing: "0.15em", color: "rgba(214,83,60,0.6)", textTransform: "uppercase", marginBottom: "0.15rem" }}>Ember Ink</p>
-          <p style={{ fontFamily: '"EB Garamond", Garamond, Georgia, serif', fontSize: "0.8rem", fontStyle: "italic", color: "rgba(245,230,200,0.5)" }}>"born stateless"</p>
+          <p style={{ fontFamily: '"JetBrains Mono", monospace', fontSize: "0.45rem", letterSpacing: "0.15em", color: "rgba(214,83,60,0.6)", textTransform: "uppercase", marginBottom: "0.15rem" }}>
+            Ember Ink
+          </p>
+          <p style={{ fontFamily: '"EB Garamond", Garamond, Georgia, serif', fontSize: "0.8rem", fontStyle: "italic", color: "rgba(245,230,200,0.5)" }}>
+            &ldquo;born stateless&rdquo;
+          </p>
         </div>
       </motion.div>
 
-      {/* Timestamp + seal */}
       <motion.div
-        style={{
-          display: "flex",
-          alignItems: "center",
-          gap: "0.4rem",
-        }}
+        style={{ display: "flex", alignItems: "center", gap: "0.4rem" }}
         animate={{ opacity: phase >= 2 ? 1 : 0 }}
         transition={{ duration: 0.4 }}
       >

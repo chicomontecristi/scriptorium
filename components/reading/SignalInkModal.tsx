@@ -96,12 +96,17 @@ export default function SignalInkModal({
 
           {/* ── Modal ───────────────────────────────────────── */}
           <motion.div
-            className="fixed z-50 top-1/2 left-1/2"
+            className="fixed z-50"
             style={{
+              top: "50%",
+              left: "50%",
               transform: "translate(-50%, -50%)",
               width: "100%",
               maxWidth: "520px",
+              maxHeight: "calc(100dvh - 2rem)",
               padding: "0 1rem",
+              display: "flex",
+              flexDirection: "column",
             }}
             initial={{ opacity: 0, y: 24, scale: 0.96 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
@@ -114,7 +119,11 @@ export default function SignalInkModal({
                 border: `1px solid ${signalConfig.color}40`,
                 boxShadow: `0 0 60px rgba(0,229,204,0.12), 0 24px 64px rgba(0,0,0,0.9)`,
                 borderRadius: "2px",
+                display: "flex",
+                flexDirection: "column",
                 overflow: "hidden",
+                flex: 1,
+                minHeight: 0,
               }}
             >
               {/* ── Header ──────────────────────────────────── */}
@@ -169,7 +178,7 @@ export default function SignalInkModal({
               </div>
 
               {/* ── Body ────────────────────────────────────── */}
-              <div style={{ padding: "1.5rem" }}>
+              <div style={{ padding: "1.5rem", overflowY: "auto", flex: 1, minHeight: 0 }}>
 
                 {hasAlreadyAsked ? (
                   <AlreadyAsked onClose={onClose} />
