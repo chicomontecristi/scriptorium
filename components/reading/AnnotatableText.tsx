@@ -93,6 +93,18 @@ export default function AnnotatableText({
     };
   }, [captureCurrentSelection]);
 
+  // Clear tooltip on scroll so a stale fixed-position tooltip never floats
+  // orphaned above the wrong text.  Uses passive listener for performance.
+  useEffect(() => {
+    if (!pendingSelection) return; // no tooltip → no listener needed
+    const onScroll = () => {
+      setPendingSelection(null);
+      setShowNoteInput(false);
+    };
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
+  }, [pendingSelection]);
+
   // Desktop: also capture on mouseup (instant, redundant but harmless)
   const handleMouseUp = useCallback(() => {
     captureCurrentSelection();
@@ -302,7 +314,8 @@ interface InkTooltipProps {
 }
 
 function InkTooltip({ rect, inkConfig, onApply, onApplyWithNote, onDismiss }: InkTooltipProps) {
-  // Center above selection, but clamp so it never leaves the viewport
+  // Center above selection in VIEWPORT coordinates (position: fixed).
+  // No window.scrollY math needed — rect is already viewport-relative.
   const TOOLTIP_W = 220; // approximate max width
   const MARGIN = 8;
   const rawLeft = rect.left + rect.width / 2;
@@ -310,9 +323,9 @@ function InkTooltip({ rect, inkConfig, onApply, onApplyWithNote, onDismiss }: In
     Math.max(rawLeft, MARGIN + TOOLTIP_W / 2),
     (typeof window !== "undefined" ? window.innerWidth : 800) - MARGIN - TOOLTIP_W / 2
   );
-  // If near top of viewport, show below selection instead
-  const rawTop = rect.top + window.scrollY - 56;
-  const top = rawTop < window.scrollY + 8 ? rect.bottom + window.scrollY + 8 : rawTop;
+  // If near top of viewport show below selection instead
+  const rawTop = rect.top - 56;
+  const top = rawTop < 8 ? rect.bottom + 8 : rawTop;
   const left = clampedLeft;
 
   return (
@@ -320,7 +333,8 @@ function InkTooltip({ rect, inkConfig, onApply, onApplyWithNote, onDismiss }: In
       className="z-50 flex items-center gap-1"
       onMouseDown={(e) => e.preventDefault()}
       style={{
-        position: "absolute",
+        position: "fixed",      // viewport-relative — no scroll drift
+        pointerEvents: "auto",  // only this element, not the portal wrapper
         top,
         left,
         transform: "translateX(-50%)",
@@ -432,14 +446,17 @@ function NoteInputPanel({
   onSave,
   onDismiss,
 }: NoteInputPanelProps) {
-  const top = rect.top + window.scrollY - 196;
+  // Viewport-relative (position: fixed) — no scrollY offset needed
+  const rawTop = rect.top - 196;
+  const top = rawTop < 8 ? rect.bottom + 8 : rawTop;
   const left = rect.left + rect.width / 2;
 
   return (
     <motion.div
       className="z-50 w-full max-w-sm"
       style={{
-        position: "absolute",
+        position: "fixed",      // viewport-relative
+        pointerEvents: "auto",  // enable interaction on panel only
         top,
         left,
         transform: "translateX(-50%)",
@@ -552,6 +569,8 @@ function NoteInputPanel({
 
 // ─── TOOLTIP PORTAL ──────────────────────────────────────────────────────────
 // Renders tooltip/note panel into document.body to escape any overflow clipping.
+// Uses position: fixed viewport layer so no scroll-offset math is needed and
+// the portal wrapper never intercepts touch events on the reading surface.
 
 function TooltipPortal({ children }: { children: React.ReactNode }) {
   const [mounted, setMounted] = useState(false);
@@ -563,8 +582,11 @@ function TooltipPortal({ children }: { children: React.ReactNode }) {
 
   if (!mounted) return null;
   return createPortal(
-    <div style={{ position: "absolute", top: 0, left: 0, width: "100%", zIndex: 9999, pointerEvents: "none" }}>
-      <div style={{ pointerEvents: "auto" }}>{children}</div>
+    // pointer-events: none on the container — each child is responsible for
+    // enabling its own pointer events.  This ensures the invisible full-screen
+    // wrapper never swallows taps on the reading text below.
+    <div style={{ position: "fixed", inset: 0, zIndex: 9999, pointerEvents: "none", overflow: "visible" }}>
+      {children}
     </div>,
     document.body
   );
