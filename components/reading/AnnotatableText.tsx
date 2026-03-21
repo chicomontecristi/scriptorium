@@ -319,7 +319,6 @@ function InkTooltip({ rect, inkConfig, onApply, onApplyWithNote, onDismiss }: In
     <motion.div
       className="z-50 flex items-center gap-1"
       onMouseDown={(e) => e.preventDefault()}
-      onPointerDown={(e) => e.preventDefault()}
       style={{
         position: "absolute",
         top,
@@ -353,7 +352,7 @@ function InkTooltip({ rect, inkConfig, onApply, onApplyWithNote, onDismiss }: In
 
       {/* Mark button */}
       <button
-        onClick={onApply}
+        onPointerUp={(e) => { e.preventDefault(); onApply(); }}
         style={{
           fontFamily: '"JetBrains Mono", monospace',
           fontSize: "0.6rem",
@@ -361,9 +360,11 @@ function InkTooltip({ rect, inkConfig, onApply, onApplyWithNote, onDismiss }: In
           color: inkConfig.color,
           background: `rgba(${hexToRgb(inkConfig.color)}, 0.12)`,
           border: `1px solid ${inkConfig.color}40`,
-          padding: "0.45rem 0.65rem",
+          padding: "0.5rem 0.9rem",
           cursor: "pointer",
           borderRadius: "1px",
+          minHeight: "40px",
+          touchAction: "manipulation",
         }}
       >
         MARK
@@ -371,7 +372,7 @@ function InkTooltip({ rect, inkConfig, onApply, onApplyWithNote, onDismiss }: In
 
       {/* Add note button */}
       <button
-        onClick={onApplyWithNote}
+        onPointerUp={(e) => { e.preventDefault(); onApplyWithNote(); }}
         style={{
           fontFamily: '"JetBrains Mono", monospace',
           fontSize: "0.6rem",
@@ -379,9 +380,11 @@ function InkTooltip({ rect, inkConfig, onApply, onApplyWithNote, onDismiss }: In
           color: "rgba(245,230,200,0.5)",
           background: "transparent",
           border: "1px solid rgba(245,230,200,0.15)",
-          padding: "0.45rem 0.65rem",
+          padding: "0.5rem 0.9rem",
           cursor: "pointer",
           borderRadius: "1px",
+          minHeight: "40px",
+          touchAction: "manipulation",
         }}
       >
         + NOTE
@@ -389,15 +392,17 @@ function InkTooltip({ rect, inkConfig, onApply, onApplyWithNote, onDismiss }: In
 
       {/* Dismiss */}
       <button
-        onClick={onDismiss}
+        onPointerUp={(e) => { e.preventDefault(); onDismiss(); }}
         style={{
           color: "rgba(245,230,200,0.25)",
           background: "transparent",
           border: "none",
           cursor: "pointer",
-          padding: "0.45rem 0.5rem",
-          fontSize: "0.7rem",
+          padding: "0.5rem 0.75rem",
+          fontSize: "0.85rem",
           lineHeight: 1,
+          minHeight: "40px",
+          touchAction: "manipulation",
         }}
       >
         ×
@@ -558,7 +563,7 @@ function TooltipPortal({ children }: { children: React.ReactNode }) {
 
   if (!mounted) return null;
   return createPortal(
-    <div style={{ position: "absolute", top: 0, left: 0, zIndex: 9999, pointerEvents: "none" }}>
+    <div style={{ position: "absolute", top: 0, left: 0, width: "100%", zIndex: 9999, pointerEvents: "none" }}>
       <div style={{ pointerEvents: "auto" }}>{children}</div>
     </div>,
     document.body
