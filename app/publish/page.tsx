@@ -59,7 +59,7 @@ const PLANS = [
   {
     id: "manuscript",
     label: "MANUSCRIPT",
-    price: "$12",
+    price: "$7",
     period: "/month",
     tagline: "One work. Full engagement.",
     items: [
@@ -76,7 +76,7 @@ const PLANS = [
   {
     id: "press",
     label: "PRESS",
-    price: "$29",
+    price: "$15",
     period: "/month",
     tagline: "Your complete catalog.",
     items: [
