@@ -32,7 +32,7 @@ export const FEATURED_WRITERS: FeaturedWriter[] = [
   {
     slug: "jose-la-luz",
     name: "José La Luz",
-    photo: undefined,
+    photo: "/writers/jose-la-luz.jpg",
     origin: "Dominican Republic",
     genre: "Political Essay · Dominican Letters",
     shortBio:
