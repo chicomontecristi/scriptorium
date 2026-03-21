@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, Suspense } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
@@ -22,6 +22,20 @@ interface Work {
 }
 
 export default function OnboardPage() {
+  return (
+    <Suspense fallback={
+      <div style={{ minHeight: "100vh", backgroundColor: "#0D0B08", display: "flex", alignItems: "center", justifyContent: "center" }}>
+        <p style={{ fontFamily: '"JetBrains Mono", monospace', fontSize: "0.5rem", letterSpacing: "0.25em", color: "rgba(201,168,76,0.4)", textTransform: "uppercase" }}>
+          Loading…
+        </p>
+      </div>
+    }>
+      <OnboardInner />
+    </Suspense>
+  );
+}
+
+function OnboardInner() {
   const searchParams = useSearchParams();
   const token = searchParams.get("token") ?? "";
 
