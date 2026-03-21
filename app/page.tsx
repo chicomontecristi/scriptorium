@@ -73,6 +73,52 @@ export default function InitiationScreen() {
       className="relative min-h-screen flex flex-col items-center justify-center overflow-hidden"
       style={{ backgroundColor: "#0D0B08" }}
     >
+      {/* ── TOP NAV ───────────────────────────────────────────── */}
+      <nav
+        style={{
+          position: "fixed",
+          top: 0,
+          left: 0,
+          right: 0,
+          zIndex: 50,
+          display: "flex",
+          justifyContent: "flex-end",
+          alignItems: "center",
+          gap: "1.75rem",
+          padding: "0.85rem 2rem",
+          borderBottom: "1px solid rgba(201,168,76,0.07)",
+          background: "rgba(13,11,8,0.85)",
+          backdropFilter: "blur(8px)",
+        }}
+      >
+        <a
+          href="/publish"
+          style={{
+            fontFamily: '"JetBrains Mono", monospace',
+            fontSize: "0.5rem",
+            letterSpacing: "0.25em",
+            color: "rgba(201,168,76,0.45)",
+            textDecoration: "none",
+            textTransform: "uppercase",
+          }}
+        >
+          Publish on Tintaxis
+        </a>
+        <a
+          href="/author/login"
+          style={{
+            fontFamily: '"JetBrains Mono", monospace',
+            fontSize: "0.5rem",
+            letterSpacing: "0.25em",
+            color: "rgba(245,230,200,0.2)",
+            textDecoration: "none",
+            textTransform: "uppercase",
+          }}
+        >
+          Author Login →
+        </a>
+      </nav>
+
       {/* ── BACKGROUND RADIAL GLOW ─────────────────────────────── */}
       <div
         className="absolute inset-0 pointer-events-none"
