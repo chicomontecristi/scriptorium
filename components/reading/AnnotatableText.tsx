@@ -48,13 +48,16 @@ export default function AnnotatableText({
 
   // ── Handle text selection (mouse + touch) ─────────────────────
   //
-  // Strategy: listen to document `selectionchange` with a debounce.
-  // This fires on every platform whenever the selection moves —
-  // including mobile handle drags — so sliding a finger naturally
-  // triggers the ink popover once the finger stops.
-  // Mouse users also benefit; onMouseUp is kept as an instant fallback.
-
-  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  // Strategy:
+  // 1. Capture the selection IMMEDIATELY on selectionchange — no debounce.
+  //    This ensures we save the selection before the OS native menu
+  //    (iOS "Copy/Define", Android toolbar) can dismiss it and fire
+  //    another selectionchange that would reset a debounce timer.
+  // 2. Once pendingSelection is set, do NOT clear it when the selection
+  //    subsequently becomes empty (e.g. user dismisses OS menu).
+  //    Only dismiss() or apply() clears it explicitly.
+  // 3. The InkTooltip uses onPointerDown (not onClick) so the MARK tap
+  //    registers before the synthetic mousedown clears the selection.
 
   const captureCurrentSelection = useCallback(() => {
     if (!paragraphRef.current) return;
@@ -62,10 +65,14 @@ export default function AnnotatableText({
     const sel = window.getSelection();
     if (!sel || sel.rangeCount === 0 || sel.isCollapsed) return;
 
-    // Only respond if the selection overlaps this paragraph
     const range = sel.getRangeAt(0);
-    if (!paragraphRef.current.contains(range.commonAncestorContainer) &&
-        !range.intersectsNode(paragraphRef.current)) return;
+
+    // Check selection is inside this paragraph
+    const node = range.commonAncestorContainer;
+    const inParagraph =
+      paragraphRef.current === node ||
+      paragraphRef.current.contains(node);
+    if (!inParagraph) return;
 
     const captured = captureSelection(paragraphIndex);
     if (!captured) return;
@@ -78,29 +85,23 @@ export default function AnnotatableText({
     setShowNoteInput(false);
   }, [paragraphIndex]);
 
-  // Debounced selectionchange — fires 320ms after the user stops moving
+  // Listen to selectionchange with no debounce — capture immediately
   useEffect(() => {
-    const handleSelectionChange = () => {
-      if (debounceRef.current) clearTimeout(debounceRef.current);
-      debounceRef.current = setTimeout(captureCurrentSelection, 320);
-    };
-    document.addEventListener("selectionchange", handleSelectionChange);
+    document.addEventListener("selectionchange", captureCurrentSelection);
     return () => {
-      document.removeEventListener("selectionchange", handleSelectionChange);
-      if (debounceRef.current) clearTimeout(debounceRef.current);
+      document.removeEventListener("selectionchange", captureCurrentSelection);
     };
   }, [captureCurrentSelection]);
 
-  // Desktop: instant response on mouse release (no debounce needed)
+  // Desktop: also capture on mouseup (instant, redundant but harmless)
   const handleMouseUp = useCallback(() => {
-    if (debounceRef.current) clearTimeout(debounceRef.current);
     captureCurrentSelection();
   }, [captureCurrentSelection]);
 
-  // Touch: also capture on finger lift in case selectionchange misfires
+  // Touch: capture 60ms after finger lifts (browser needs one tick to
+  // commit the selection object on iOS before we can read it)
   const handleTouchEnd = useCallback(() => {
-    if (debounceRef.current) clearTimeout(debounceRef.current);
-    setTimeout(captureCurrentSelection, 50);
+    setTimeout(captureCurrentSelection, 60);
   }, [captureCurrentSelection]);
 
   // ── Apply ink to selection ─────────────────────────────────────
@@ -317,6 +318,8 @@ function InkTooltip({ rect, inkConfig, onApply, onApplyWithNote, onDismiss }: In
   return (
     <motion.div
       className="z-50 flex items-center gap-1"
+      onMouseDown={(e) => e.preventDefault()}
+      onPointerDown={(e) => e.preventDefault()}
       style={{
         position: "absolute",
         top,
