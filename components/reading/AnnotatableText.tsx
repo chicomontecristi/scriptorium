@@ -46,19 +46,33 @@ export default function AnnotatableText({
 
   const inkConfig = INK_CONFIGS[activeInkType];
 
-  // ── Handle text selection ──────────────────────────────────────
-  const handleMouseUp = useCallback(() => {
+  // ── Handle text selection (mouse + touch) ─────────────────────
+  const captureCurrentSelection = useCallback(() => {
     const selection = captureSelection(paragraphIndex);
     if (!selection || !paragraphRef.current) return;
 
-    const range = window.getSelection()?.getRangeAt(0);
-    if (!range) return;
+    const sel = window.getSelection();
+    if (!sel || sel.rangeCount === 0) return;
 
+    const range = sel.getRangeAt(0);
     const rect = range.getBoundingClientRect();
+    // rect can be zero-height if selection collapsed — guard
+    if (rect.width === 0 && rect.height === 0) return;
+
     setPendingSelection({ selection, rect });
     setNoteValue("");
     setShowNoteInput(false);
   }, [paragraphIndex]);
+
+  const handleMouseUp = useCallback(() => {
+    captureCurrentSelection();
+  }, [captureCurrentSelection]);
+
+  // On touch devices the selection isn't committed until after touchend,
+  // so we wait one tick before reading it.
+  const handleTouchEnd = useCallback(() => {
+    setTimeout(captureCurrentSelection, 50);
+  }, [captureCurrentSelection]);
 
   // ── Apply ink to selection ─────────────────────────────────────
   const applyInk = useCallback((withNote: boolean) => {
@@ -156,6 +170,7 @@ export default function AnnotatableText({
         ref={paragraphRef}
         style={paragraphStyle}
         onMouseUp={handleMouseUp}
+        onTouchEnd={handleTouchEnd}
         className={`reading-surface ${hasAnnotation ? "has-annotation" : ""}`}
         data-paragraph={paragraphIndex}
       >
@@ -257,8 +272,18 @@ interface InkTooltipProps {
 }
 
 function InkTooltip({ rect, inkConfig, onApply, onApplyWithNote, onDismiss }: InkTooltipProps) {
-  const top = rect.top + window.scrollY - 52;
-  const left = rect.left + rect.width / 2;
+  // Center above selection, but clamp so it never leaves the viewport
+  const TOOLTIP_W = 220; // approximate max width
+  const MARGIN = 8;
+  const rawLeft = rect.left + rect.width / 2;
+  const clampedLeft = Math.min(
+    Math.max(rawLeft, MARGIN + TOOLTIP_W / 2),
+    (typeof window !== "undefined" ? window.innerWidth : 800) - MARGIN - TOOLTIP_W / 2
+  );
+  // If near top of viewport, show below selection instead
+  const rawTop = rect.top + window.scrollY - 56;
+  const top = rawTop < window.scrollY + 8 ? rect.bottom + window.scrollY + 8 : rawTop;
+  const left = clampedLeft;
 
   return (
     <motion.div
@@ -272,7 +297,7 @@ function InkTooltip({ rect, inkConfig, onApply, onApplyWithNote, onDismiss }: In
         border: `1px solid ${inkConfig.color}`,
         boxShadow: `0 4px 20px rgba(0,0,0,0.8), 0 0 12px ${inkConfig.glowColor}`,
         borderRadius: "2px",
-        padding: "0.35rem 0.5rem",
+        padding: "0.4rem 0.6rem",
         whiteSpace: "nowrap",
       }}
       initial={{ opacity: 0, y: 4, scale: 0.95 }}
@@ -304,7 +329,7 @@ function InkTooltip({ rect, inkConfig, onApply, onApplyWithNote, onDismiss }: In
           color: inkConfig.color,
           background: `rgba(${hexToRgb(inkConfig.color)}, 0.12)`,
           border: `1px solid ${inkConfig.color}40`,
-          padding: "0.2rem 0.5rem",
+          padding: "0.45rem 0.65rem",
           cursor: "pointer",
           borderRadius: "1px",
         }}
@@ -322,7 +347,7 @@ function InkTooltip({ rect, inkConfig, onApply, onApplyWithNote, onDismiss }: In
           color: "rgba(245,230,200,0.5)",
           background: "transparent",
           border: "1px solid rgba(245,230,200,0.15)",
-          padding: "0.2rem 0.5rem",
+          padding: "0.45rem 0.65rem",
           cursor: "pointer",
           borderRadius: "1px",
         }}
@@ -338,7 +363,7 @@ function InkTooltip({ rect, inkConfig, onApply, onApplyWithNote, onDismiss }: In
           background: "transparent",
           border: "none",
           cursor: "pointer",
-          padding: "0.2rem 0.3rem",
+          padding: "0.45rem 0.5rem",
           fontSize: "0.7rem",
           lineHeight: 1,
         }}
