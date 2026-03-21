@@ -8,10 +8,11 @@ import { stripe, PLAN_PRICE_IDS, roleForPlan, type PlanId } from "@/lib/stripe";
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
-    const { plan, returnUrl, email } = body as {
+    const { plan, returnUrl, email, writerSlug } = body as {
       plan: PlanId;
       returnUrl?: string;
       email?: string;
+      writerSlug?: string; // attribution — which writer's page drove this subscription
     };
 
     if (!plan || !PLAN_PRICE_IDS[plan]) {
@@ -35,8 +36,13 @@ export async function POST(req: NextRequest) {
       mode: "subscription",
       line_items: [{ price: priceId, quantity: 1 }],
 
-      // Pass plan + returnUrl through metadata so /activate can read them
-      metadata: { plan, returnUrl: safeReturn, role },
+      // Pass plan + returnUrl + writer attribution through metadata
+      metadata: {
+        plan,
+        returnUrl: safeReturn,
+        role,
+        ...(writerSlug ? { writerSlug } : {}),
+      },
 
       // Pre-fill email if we have it
       ...(email ? { customer_email: email } : {}),

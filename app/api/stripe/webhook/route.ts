@@ -9,6 +9,7 @@
 
 import { NextRequest, NextResponse } from "next/server";
 import { stripe } from "@/lib/stripe";
+import { getWriterConnectId, WRITER_SHARE } from "@/lib/featured-writers";
 import type Stripe from "stripe";
 
 // Next.js App Router: read raw body to verify Stripe signature
@@ -56,11 +57,42 @@ export async function POST(req: NextRequest) {
     }
 
     case "checkout.session.completed": {
-      // Backup handler — primary activation happens via /api/stripe/activate redirect.
-      // This fires for any checkout session, including ones where the user closed
-      // the tab before being redirected.
+      // Primary activation happens via /api/stripe/activate redirect.
+      // This is the fallback for tab-close cases AND the writer payout trigger.
       const session = event.data.object as Stripe.CheckoutSession;
-      console.log(`[stripe/webhook] Checkout complete: ${session.id} plan=${session.metadata?.plan}`);
+      const { plan, writerSlug } = session.metadata ?? {};
+      console.log(`[stripe/webhook] Checkout complete: ${session.id} plan=${plan} writer=${writerSlug ?? "none"}`);
+
+      // ── Writer payout: transfer 75% to their Stripe Connect account ──────────
+      if (writerSlug && session.amount_total && session.amount_total > 0) {
+        const connectId = getWriterConnectId(writerSlug);
+        if (connectId) {
+          const writerAmount = Math.floor(session.amount_total * WRITER_SHARE);
+          try {
+            const transfer = await stripe.transfers.create({
+              amount:   writerAmount,               // cents
+              currency: session.currency ?? "usd",
+              destination: connectId,
+              transfer_group: session.id,
+              description: `Tintaxis 75% share — ${writerSlug} — session ${session.id}`,
+              metadata: {
+                writerSlug,
+                plan: plan ?? "",
+                checkoutSession: session.id,
+                writerAmount: String(writerAmount),
+                totalAmount:  String(session.amount_total),
+              },
+            });
+            console.log(`[stripe/webhook] Transfer created: ${transfer.id} → ${connectId} amount=${writerAmount}¢`);
+          } catch (err) {
+            // Log but don't fail — Tintaxis still received payment
+            console.error(`[stripe/webhook] Transfer failed for ${writerSlug}:`, err);
+          }
+        } else {
+          // Writer hasn't connected Stripe yet — log for manual reconciliation
+          console.warn(`[stripe/webhook] No Connect account for writer "${writerSlug}" — payout queued for manual transfer.`);
+        }
+      }
       break;
     }
 

@@ -15,7 +15,8 @@ interface SubscriptionModalProps {
   triggeredBy?: SubscriptionTierName;
   featureName?: string;
   onClose: () => void;
-  returnUrl?: string; // where to send the reader after successful payment
+  returnUrl?: string;   // where to send the reader after successful payment
+  writerSlug?: string;  // attribution — which writer drove this subscription
 }
 
 interface Tier {
@@ -105,6 +106,7 @@ export default function SubscriptionModal({
   featureName,
   onClose,
   returnUrl,
+  writerSlug,
 }: SubscriptionModalProps) {
   const [loadingTier, setLoadingTier] = useState<SubscriptionTierName | null>(null);
 
@@ -126,6 +128,7 @@ export default function SubscriptionModal({
         body: JSON.stringify({
           plan: tierId,
           returnUrl: returnUrl ?? window.location.pathname,
+          ...(writerSlug ? { writerSlug } : {}),
         }),
       });
       const data = await res.json();

@@ -105,3 +105,21 @@ export function getWriterBySlug(slug: string): FeaturedWriter | undefined {
 export function getAllWriterSlugs(): string[] {
   return FEATURED_WRITERS.map((w) => w.slug);
 }
+
+/**
+ * Returns the Stripe Connect account ID for a writer, if they've connected.
+ * Looks up env var STRIPE_CONNECT_{SLUG_UPPER_NODASHES}
+ * e.g. jose-la-luz → STRIPE_CONNECT_JOSE_LA_LUZ
+ * Only callable server-side (reads process.env).
+ */
+export function getWriterConnectId(slug: string): string | undefined {
+  const key = `STRIPE_CONNECT_${slug.toUpperCase().replace(/-/g, "_")}`;
+  return process.env[key] || undefined;
+}
+
+/**
+ * Returns the TINTAXIS_PLATFORM_SHARE (default 0.25).
+ * Writers receive 1 - TINTAXIS_PLATFORM_SHARE of each payment.
+ */
+export const PLATFORM_SHARE = 0.25;
+export const WRITER_SHARE   = 0.75;

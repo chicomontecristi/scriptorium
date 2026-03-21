@@ -1,9 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, Suspense } from "react";
 import { motion } from "framer-motion";
 import Link from "next/link";
 import Image from "next/image";
+import { useSearchParams } from "next/navigation";
 import type { FeaturedWriter, FeaturedWork } from "@/lib/featured-writers";
 import TintaxisLogo from "@/components/ui/TintaxisLogo";
 import SubscriptionModal from "@/components/ui/SubscriptionModal";
@@ -12,12 +13,57 @@ import type { SubscriptionTierName } from "@/components/ui/SubscriptionModal";
 // ─── WRITER PROFILE CLIENT ────────────────────────────────────────────────────
 
 export default function WriterProfileClient({ writer }: { writer: FeaturedWriter }) {
+  return (
+    <Suspense fallback={<div style={{ minHeight: "100vh", backgroundColor: "#0D0B08" }} />}>
+      <WriterProfileInner writer={writer} />
+    </Suspense>
+  );
+}
+
+function WriterProfileInner({ writer }: { writer: FeaturedWriter }) {
   const [subModalOpen, setSubModalOpen] = useState(false);
   const [gateTier] = useState<SubscriptionTierName>("codex");
   const displayName = writer.artistName ?? writer.name;
 
+  // ── Stripe Connect callback banner ────────────────────────────────────────
+  const searchParams = useSearchParams();
+  const connectStatus = searchParams.get("connect"); // "connected" | "incomplete" | "error"
+  const [connectBanner, setConnectBanner] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (connectStatus === "connected") setConnectBanner("✓ Stripe account connected. Add the env var to Vercel to activate payouts.");
+    else if (connectStatus === "incomplete") setConnectBanner("⚠ Stripe onboarding incomplete. Please finish the form.");
+    else if (connectStatus === "error") setConnectBanner("✕ Something went wrong with Stripe Connect. Try generating a new link.");
+  }, [connectStatus]);
+
   return (
     <div className="min-h-screen" style={{ backgroundColor: "#0D0B08" }}>
+
+      {/* ── Connect status banner (admin-only, post-onboarding) ── */}
+      {connectBanner && (
+        <div style={{
+          position: "fixed", top: 0, left: 0, right: 0, zIndex: 100,
+          background: connectStatus === "connected" ? "rgba(0,180,100,0.85)" : "rgba(200,80,40,0.85)",
+          padding: "0.6rem 1.5rem",
+          display: "flex", justifyContent: "space-between", alignItems: "center",
+          backdropFilter: "blur(4px)",
+        }}>
+          <span style={{
+            fontFamily: '"JetBrains Mono", monospace',
+            fontSize: "0.5rem",
+            letterSpacing: "0.12em",
+            color: "#fff",
+          }}>
+            {connectBanner}
+          </span>
+          <button
+            onClick={() => setConnectBanner(null)}
+            style={{ background: "none", border: "none", color: "#fff", cursor: "pointer", fontSize: "0.75rem" }}
+          >
+            ✕
+          </button>
+        </div>
+      )}
 
       {/* ── Top Nav ───────────────────────────────────────────── */}
       <nav
@@ -342,6 +388,7 @@ export default function WriterProfileClient({ writer }: { writer: FeaturedWriter
         featureName={`${displayName}'s work`}
         onClose={() => setSubModalOpen(false)}
         returnUrl={`/writers/${writer.slug}`}
+        writerSlug={writer.slug}
       />
     </div>
   );
