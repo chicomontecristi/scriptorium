@@ -384,20 +384,80 @@ function SignalCard({ signal, onReply }: { signal: SignalQuestion; onReply: (id:
 // ─── MAIN DASHBOARD ────────────────────────────────────────────────────────────
 type DashTab = "signals" | "whispers" | "chapters" | "analytics";
 
+interface LiveStats {
+  readers: { total: number; active: number; byTier: Record<string, number> };
+  stripe: {
+    balance: { available: number; pending: number; currency: string };
+    recentCharges: { amount: number; description: string | null; created: number }[];
+  };
+}
+
 export default function AuthorDashboard() {
   const [activeTab, setActiveTab] = useState<DashTab>("signals");
-  const [signals, setSignals] = useState<SignalQuestion[]>(MOCK_SIGNALS);
+  const [signals, setSignals] = useState<SignalQuestion[]>([]);
   const [whispers, setWhispers] = useState<WhisperEntry[]>(MOCK_WHISPERS);
   const [whisperForm, setWhisperForm] = useState({ chapterSlug: "one", anchorText: "", whisper: "" });
   const [whisperStatus, setWhisperStatus] = useState<"idle" | "saved">("idle");
+  const [stats, setStats] = useState<LiveStats | null>(null);
+  const [statsLoading, setStatsLoading] = useState(true);
+
+  // ── Fetch live data on mount ───────────────────────────────────────────────
+  useEffect(() => {
+    // Fetch signals
+    fetch("/api/author/signals")
+      .then((r) => r.json())
+      .then((data) => {
+        if (data.signals) {
+          // Map DB shape to local shape
+          setSignals(
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            data.signals.map((s: any) => ({
+              id:           s.id,
+              readerEmail:  s.reader_email ?? "anonymous",
+              chapterSlug:  s.chapter_slug,
+              chapterTitle: s.chapter_title ?? s.chapter_slug,
+              anchorText:   s.selected_text ?? "",
+              question:     s.question,
+              askedAt:      s.created_at,
+              answered:     s.answered,
+              reply:        s.reply ?? undefined,
+            }))
+          );
+        } else {
+          // No DB yet — fall back to mock so the UI isn't empty
+          setSignals(MOCK_SIGNALS);
+        }
+      })
+      .catch(() => setSignals(MOCK_SIGNALS));
+
+    // Fetch reader + Stripe stats
+    fetch("/api/author/stats")
+      .then((r) => r.json())
+      .then((data) => {
+        if (!data.error) setStats(data);
+      })
+      .catch(() => {})
+      .finally(() => setStatsLoading(false));
+  }, []);
 
   const openSignals = signals.filter((s) => !s.answered);
   const answeredSignals = signals.filter((s) => s.answered);
 
-  const handleReply = (id: string, reply: string) => {
+  const handleReply = async (id: string, reply: string) => {
+    // Optimistic update
     setSignals((prev) =>
       prev.map((s) => (s.id === id ? { ...s, answered: true, reply } : s))
     );
+    // Persist to Supabase
+    try {
+      await fetch(`/api/author/signals/${id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ reply }),
+      });
+    } catch (err) {
+      console.error("[dashboard] reply persist failed:", err);
+    }
   };
 
   const handleLogout = async () => {
@@ -598,8 +658,19 @@ export default function AuthorDashboard() {
           }}
         >
           {[
-            { label: "Total Reads", value: "142" },
-            { label: "Avg. Depth", value: "87%" },
+            {
+              label: "Active Readers",
+              value: statsLoading ? "—" : String(stats?.readers.active ?? 0),
+            },
+            {
+              label: "Revenue (USD)",
+              value: statsLoading
+                ? "—"
+                : stats
+                ? `$${(((stats.stripe.balance.available + stats.stripe.balance.pending) / 100)
+                    .toFixed(0))}`
+                : "$0",
+            },
             { label: "Open Signals", value: String(openSignals.length) },
             { label: "Whispers", value: String(whispers.length) },
           ].map((stat, i) => (
@@ -1133,6 +1204,147 @@ export default function AuthorDashboard() {
                     </p>
                   </div>
                 ))}
+              </div>
+
+              {/* ── Reader Tier Breakdown (live) ──────────────────────── */}
+              <div
+                style={{
+                  border: "1px solid rgba(201,168,76,0.12)",
+                  marginTop: "1.5rem",
+                }}
+              >
+                <div
+                  style={{
+                    padding: "1.25rem 2rem 1rem",
+                    borderBottom: "1px solid rgba(201,168,76,0.08)",
+                  }}
+                >
+                  <p
+                    style={{
+                      fontFamily: '"JetBrains Mono", monospace',
+                      fontSize: "0.46rem",
+                      letterSpacing: "0.2em",
+                      color: "rgba(201,168,76,0.4)",
+                      textTransform: "uppercase",
+                    }}
+                  >
+                    Readers by Tier
+                  </p>
+                </div>
+
+                {(["codex", "scribe", "archive", "chronicler"] as const).map((tier, i, arr) => {
+                  const count = stats?.readers.byTier[tier] ?? 0;
+                  const total = stats?.readers.active ?? 0;
+                  const pct   = total > 0 ? Math.round((count / total) * 100) : 0;
+                  const tierLabels: Record<string, string> = {
+                    codex:       "Codex",
+                    scribe:      "Scribe",
+                    archive:     "Archive",
+                    chronicler:  "Chronicler",
+                  };
+                  return (
+                    <div
+                      key={tier}
+                      style={{
+                        display: "grid",
+                        gridTemplateColumns: "90px 1fr 48px 48px",
+                        alignItems: "center",
+                        gap: "1rem",
+                        padding: "1rem 2rem",
+                        borderBottom: i < arr.length - 1 ? "1px solid rgba(201,168,76,0.06)" : "none",
+                      }}
+                    >
+                      <p
+                        style={{
+                          fontFamily: '"JetBrains Mono", monospace',
+                          fontSize: "0.46rem",
+                          letterSpacing: "0.15em",
+                          color: "rgba(245,230,200,0.35)",
+                          textTransform: "uppercase",
+                        }}
+                      >
+                        {tierLabels[tier]}
+                      </p>
+
+                      {/* Fill bar */}
+                      <div
+                        style={{
+                          height: "2px",
+                          background: "rgba(201,168,76,0.08)",
+                          borderRadius: "1px",
+                          overflow: "hidden",
+                        }}
+                      >
+                        <motion.div
+                          initial={{ width: 0 }}
+                          animate={{ width: `${pct}%` }}
+                          transition={{ duration: 0.8, ease: "easeOut", delay: i * 0.08 }}
+                          style={{
+                            height: "100%",
+                            background: statsLoading
+                              ? "rgba(201,168,76,0.15)"
+                              : `rgba(201,168,76,${0.25 + (pct / 100) * 0.55})`,
+                            borderRadius: "1px",
+                          }}
+                        />
+                      </div>
+
+                      <p
+                        style={{
+                          fontFamily: '"EB Garamond", Garamond, Georgia, serif',
+                          fontSize: "1.1rem",
+                          color: "rgba(201,168,76,0.65)",
+                          textAlign: "right",
+                          lineHeight: 1,
+                        }}
+                      >
+                        {statsLoading ? "—" : count}
+                      </p>
+
+                      <p
+                        style={{
+                          fontFamily: '"JetBrains Mono", monospace',
+                          fontSize: "0.42rem",
+                          color: "rgba(245,230,200,0.18)",
+                          textAlign: "right",
+                        }}
+                      >
+                        {statsLoading ? "" : `${pct}%`}
+                      </p>
+                    </div>
+                  );
+                })}
+
+                <div
+                  style={{
+                    padding: "0.75rem 2rem",
+                    borderTop: "1px solid rgba(201,168,76,0.08)",
+                    display: "flex",
+                    justifyContent: "space-between",
+                    alignItems: "center",
+                  }}
+                >
+                  <p
+                    style={{
+                      fontFamily: '"JetBrains Mono", monospace',
+                      fontSize: "0.43rem",
+                      letterSpacing: "0.12em",
+                      color: "rgba(245,230,200,0.15)",
+                      textTransform: "uppercase",
+                    }}
+                  >
+                    Total active
+                  </p>
+                  <p
+                    style={{
+                      fontFamily: '"EB Garamond", Garamond, Georgia, serif',
+                      fontSize: "1rem",
+                      color: "rgba(201,168,76,0.4)",
+                    }}
+                  >
+                    {statsLoading ? "—" : (stats?.readers.active ?? 0)}
+                  </p>
+                </div>
               </div>
 
               <p

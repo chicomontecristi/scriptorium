@@ -30,6 +30,19 @@ export interface PurchaseRow {
   created_at:        string;
 }
 
+export interface SignalRow {
+  id:            string;
+  chapter_slug:  string;
+  chapter_title: string | null;
+  selected_text: string | null;
+  question:      string;
+  reader_email:  string | null;
+  answered:      boolean;
+  reply:         string | null;
+  created_at:    string;
+  updated_at:    string;
+}
+
 // Supabase Database type expected by createClient<Database>
 export interface Database {
   public: {
@@ -43,6 +56,11 @@ export interface Database {
         Row:    PurchaseRow;
         Insert: Omit<PurchaseRow, "id" | "created_at">;
         Update: Partial<Omit<PurchaseRow, "id" | "created_at">>;
+      };
+      signals: {
+        Row:    SignalRow;
+        Insert: Omit<SignalRow, "id" | "created_at" | "updated_at">;
+        Update: Partial<Omit<SignalRow, "id" | "created_at">>;
       };
     };
     Views:     Record<string, never>;

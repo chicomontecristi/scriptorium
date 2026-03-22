@@ -2,7 +2,7 @@
 // All Supabase operations go through here. Server-side only.
 
 import { supabase } from "./supabase";
-import type { ReaderRow, ReaderTier, AuthorPlan } from "./db-types";
+import type { ReaderRow, ReaderTier, AuthorPlan, SignalRow } from "./db-types";
 
 // ── Readers ───────────────────────────────────────────────────────────────────
 
@@ -193,4 +193,103 @@ export async function hasPurchasedChapter(
     return false;
   }
   return (count ?? 0) > 0;
+}
+
+// ── Signals ───────────────────────────────────────────────────────────────────
+
+/**
+ * Persist a reader's Signal Ink question to the database.
+ */
+export async function insertSignal(params: {
+  chapterSlug:   string;
+  chapterTitle?: string | null;
+  selectedText?: string | null;
+  question:      string;
+  readerEmail?:  string | null;
+}): Promise<SignalRow | null> {
+  const { data, error } = await supabase
+    .from("signals")
+    .insert({
+      chapter_slug:  params.chapterSlug,
+      chapter_title: params.chapterTitle ?? null,
+      selected_text: params.selectedText ?? null,
+      question:      params.question,
+      reader_email:  params.readerEmail ?? null,
+      answered:      false,
+    })
+    .select()
+    .single();
+
+  if (error) {
+    console.error("[db] insertSignal error:", error.message);
+    return null;
+  }
+  return data;
+}
+
+/**
+ * Fetch all signals, newest first.
+ */
+export async function listSignals(): Promise<SignalRow[]> {
+  const { data, error } = await supabase
+    .from("signals")
+    .select("*")
+    .order("created_at", { ascending: false });
+
+  if (error) {
+    console.error("[db] listSignals error:", error.message);
+    return [];
+  }
+  return data ?? [];
+}
+
+/**
+ * Record the author's reply to a signal.
+ */
+export async function replyToSignal(
+  id:    string,
+  reply: string
+): Promise<boolean> {
+  const { error } = await supabase
+    .from("signals")
+    .update({ answered: true, reply, updated_at: new Date().toISOString() })
+    .eq("id", id);
+
+  if (error) {
+    console.error("[db] replyToSignal error:", error.message);
+    return false;
+  }
+  return true;
+}
+
+// ── Author stats ──────────────────────────────────────────────────────────────
+
+/**
+ * Returns reader counts broken down by tier and active state.
+ */
+export async function getReaderStats(): Promise<{
+  total: number;
+  active: number;
+  byTier: Record<string, number>;
+}> {
+  const { data, error } = await supabase
+    .from("readers")
+    .select("tier, active");
+
+  if (error) {
+    console.error("[db] getReaderStats error:", error.message);
+    return { total: 0, active: 0, byTier: {} };
+  }
+
+  const rows = data ?? [];
+  const active = rows.filter((r) => r.active).length;
+  const byTier: Record<string, number> = {};
+
+  for (const row of rows) {
+    if (row.active && row.tier) {
+      byTier[row.tier] = (byTier[row.tier] ?? 0) + 1;
+    }
+  }
+
+  return { total: rows.length, active, byTier };
 }

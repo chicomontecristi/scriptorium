@@ -8,6 +8,8 @@
 //   RESEND_API_KEY    — Resend.com API key (free tier works for Phase 1)
 
 import { NextRequest, NextResponse } from "next/server";
+import { insertSignal } from "@/lib/db";
+import { CHAPTERS } from "@/lib/content/chapters";
 
 interface SignalPayload {
   chapterSlug: string;
@@ -62,6 +64,16 @@ export async function POST(req: NextRequest) {
         readerEmail,
       });
     }
+
+    // ── Phase 2: Persist to Supabase ──────────────────────
+    const chapterTitle = CHAPTERS[chapterSlug]?.title ?? null;
+    await insertSignal({
+      chapterSlug,
+      chapterTitle,
+      selectedText: selectedText ?? null,
+      question,
+      readerEmail: readerEmail ?? null,
+    });
 
     return NextResponse.json({ success: true }, { status: 200 });
   } catch (error) {
