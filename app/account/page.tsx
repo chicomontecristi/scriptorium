@@ -7,7 +7,7 @@
 // Checks live session via /api/reader/session on mount.
 // If not subscribed → shows an "access not found" state with a path forward.
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, Suspense } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
@@ -72,7 +72,18 @@ interface ReaderSession {
 
 // ─── MAIN COMPONENT ───────────────────────────────────────────────────────────
 
-export default function AccountPage() {
+// ─── SUSPENSE WRAPPER ─────────────────────────────────────────────────────────
+// Next.js 14 requires useSearchParams() to be inside a Suspense boundary.
+
+export default function AccountPageShell() {
+  return (
+    <Suspense fallback={null}>
+      <AccountPage />
+    </Suspense>
+  );
+}
+
+function AccountPage() {
   const [session, setSession] = useState<ReaderSession | null>(null);
   const [loading, setLoading] = useState(true);
   const [signingOut, setSigningOut] = useState(false);
